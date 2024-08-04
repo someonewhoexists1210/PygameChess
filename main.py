@@ -100,56 +100,52 @@ WBISHOP = pygame.transform.scale(pygame.image.load('imgs/wbishop.png'), (50,50))
 WQUEEN = pygame.transform.scale(pygame.image.load('imgs/wqueen.png'), (50,50))
 WKING = pygame.transform.scale(pygame.image.load('imgs/wking.png'), (50,50))
 
-
-edit = lambda sq : [sq[0],int(sq[1])]
-join = lambda a : a[0] + str(a[1])
-
-
-#Board Initialization
-for i in range(0,8):
-    for n in range(8):
-        if i%2==0:
-            if n%2==1:
-                pygame.draw.rect(WIN, (0,153,51), (n*50,i*50,50,50))
-            else:
-                pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
-        else:
-            if n%2==0:
-                pygame.draw.rect(WIN, (0,153,51), (n*50,i*50,50,50))
-            else:
-                pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
-
-               
-
-
 #Current pieces on board
 pieces = []
 
+for i in range(0,8):
+            for n in range(8):
+                if i%2==0:
+                    if n%2==1:
+                        pygame.draw.rect(WIN, (0,153,51), (n*50,i*50,50,50))
+                    else:
+                        pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
+                else:
+                    if n%2==0:
+                        pygame.draw.rect(WIN, (0,153,51), (n*50,i*50,50,50))
+                    else:
+                        pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
 
-def square_occupied(sq):
-    for l in pieces:
-        if l.square == sq:
-            return True
-        else:
-            return False
+
+def square_occupied(sq, isBlack =None):
+    if isBlack == None:
+        for l in pieces:
+            if l.square == sq:
+                return True
+        return False
+    else:
+        for l in pieces:
+            if l.square == sq:
+                if l.isBlack == isBlack:
+                    return True
+        return False
 
 class piece:
-    def __init__(self, square, color, img, worth):
+    def __init__(self, square, isBlack, img, worth):
         self.square = square
         self.x, self.y = boardpositions[square]
-        self.moves = []
-        self.color = color
+        self.moves = set([])
+        self.isBlack = isBlack
         self.img = img
         self.worth = worth
         
 
-    def draw(self, window):
-        window.blit(self.img, (self.x, self.y))
+    def draw(self):
+        WIN.blit(self.img, (self.x, self.y))
 
-    def draw_moves(self, win):
+    def draw_moves(self):
         for x in self.moves:
-            pygame.draw.circle(win, (125,125,125), (boardpositions[x][0] + 50, boardpositions[x][1] - 50), 30)
-        pygame.display.update()
+            pygame.draw.circle(WIN, (125,125,125), (boardpositions[x][0] + 25, boardpositions[x][1] + 25), 10)
 
     def click(self, pos):
         x1 = pos[0]
@@ -158,25 +154,91 @@ class piece:
             return True
         else:
             return False
-        
+
     def capture(self, capturedpiece, player):
         pieces.remove(capturedpiece)
         player.points += capturedpiece.worth
         self.x, self.y = boardpositions[capturedpiece.square]
-        
+    
 class pawn(piece):
-    def __init__(self, square, color, img):
-        super().__init__(square, color, img, 1)
+    def __init__(self, square, isBlack, img):
+        super().__init__(square, isBlack, img, 1)
+        
+    def check_moves(self): 
+        if self.isBlack:
+            sq_in_front = self.square[0] + str(int(self.square[1]) - 1)
+            sq2_in_front = self.square[0] + str(int(self.square[1]) - 2)
+            if not square_occupied(sq_in_front):
+                self.moves.add(sq_in_front)
+                if self.square[1] == '7' and not square_occupied(sq2_in_front):
+                    self.moves.add(sq2_in_front)
+        else:
+            sq_in_front = self.square[0] + str(int(self.square[1]) + 1)
+            sq2_in_front = self.square[0] + str(int(self.square[1]) + 2)
+            if  not square_occupied(sq2_in_front):
+                self.moves.add(sq_in_front)
+                if self.square[1] == '2' and not square_occupied(sq2_in_front):
+                    self.moves.add(sq2_in_front)
+        
+        diags = diagonal(self.square, self)
+        if diags != None:
+            try:
+                #Draw capture piece rect
+                pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5 , 40, 40))
+                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
 
-    def check_moves(self):
-        pass
+                
+                pygame.draw.rect(WIN, (125,255,125), (boardpositions[diags[1]][0] + 5, boardpositions[diags[1]][1] + 5 , 40, 40))
+                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[1]][0] + 10, boardpositions[diags[1]][1] + 10 , 30, 30))
+
+
+            except:
+                if diags != []:
+                    pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5, 40, 40))
+                    pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
+
+
+                
+
+        self.draw_moves()
+    
+    
     
 
 def diagonal(sq, piece=None):
-    if piece != 'pawn':
-        sq1 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])+1)
-        sq2 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])+1)
-        return [sq1, sq2]
+    if piece.worth == 1:
+        result = []
+        if piece.isBlack:
+            if sq[0] !='a':
+                sq1 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])-1)
+                if square_occupied(sq1, not piece.isBlack):
+                    result.append(sq1)
+
+            if sq[0] != 'h':
+                sq2 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])-1)
+                if square_occupied(sq2, not piece.isBlack):
+                    result.append(sq2)
+
+               
+            return result
+        else:
+            
+            if sq[0] !='a':
+                sq1 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])+1)
+                if square_occupied(sq1, not piece.isBlack):
+                    result.append(sq1)
+
+            if sq[0] != 'h':
+                sq2 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])+1)
+                if square_occupied(sq2, not piece.isBlack):
+                    result.append(sq2)
+
+               
+            return result
+            
+
+            
+
     tempsq = sq
     tr = []
     bl = []
@@ -186,9 +248,9 @@ def diagonal(sq, piece=None):
     # Check Top-Right Diagonal
     while tempsq[0] != 'h' and tempsq[1] != ' 8':
             tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])+1)
+            tr.append(tempsq)
             if square_occupied(tempsq):
                 break
-            tr.append(tempsq)
             
     #Reset while loop
     tempsq = sq
@@ -222,48 +284,31 @@ def diagonal(sq, piece=None):
     return tr + tl + br +bl
 
 
+blp_a= pawn('a7', True, BPAWN)
+blp_b= pawn('b3', True, BPAWN)
+blp_c= pawn('c7', True, BPAWN)
+blp_d= pawn('d7', True, BPAWN)
+blp_e= pawn('e7', True, BPAWN)
+blp_f= pawn('f7', True, BPAWN)
+blp_g= pawn('g7', True, BPAWN)
+blp_h= pawn('h7', True, BPAWN)
 
-def check_pawn_moves(pawn):
-    if pawn.color == 'b':
-        if  not square_occupied(pawn.square[0]+ str(int(pawn.square[1])-1)):
-            pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])-1))
-            if pawn.square[1] == '7' and not square_occupied(pawn.square[0]+ str(int(pawn.square[1])-2)):
-                pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])-2))
-    elif pawn.color == 'w':
-        if  not square_occupied(pawn.square[0]+ str(int(pawn.square[1])+1)):
-            pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])+1))
-            if pawn.square[1] == '7' and not square_occupied(pawn.square[0]+ str(int(pawn.square[1])+2)):
-                pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])+2))
-    
+wp_a= pawn('a2', False, WPAWN)
+wp_b= pawn('b2', False, WPAWN)
+wp_c= pawn('c2', False, WPAWN)
+wp_d= pawn('d2', False, WPAWN)
+wp_e= pawn('e2', False, WPAWN)
+wp_f= pawn('f2', False, WPAWN)
+wp_g= pawn('g2', False, WPAWN)
+wp_h= pawn('h2', False, WPAWN)
 
 
-
-for m in range(0, 8):
-    pieces.append(piece(abcs[m]+'7', 'black', BPAWN, 1))
-    pieces.append(piece(abcs[m]+'2', 'white', WPAWN, 1))
-pieces.append(piece('a8', 'black', BROOK, 5))
-pieces.append(piece('h8', 'black', BROOK, 5))
-pieces.append(piece('b8', 'black', BKNIGHT, 3))
-pieces.append(piece('g8', 'black', BKNIGHT, 3))
-pieces.append(piece('c8', 'black', BBISHOP, 3))
-pieces.append(piece('f8', 'black', BBISHOP, 3))
-pieces.append(piece('d8', 'black', BQUEEN, 9))
-pieces.append(piece('e8', 'black', BKING, 100))
-
-pieces.append(piece('a1', 'white', WROOK, 5))
-pieces.append(piece('h1', 'white', WROOK, 5))
-pieces.append(piece('b1', 'white', WKNIGHT, 3))
-pieces.append(piece('g1', 'white', WKNIGHT, 3))
-pieces.append(piece('c1', 'white', WBISHOP, 3))
-pieces.append(piece('f1', 'white', WBISHOP, 3))
-pieces.append(piece('d1', 'white', WQUEEN, 9))
-pieces.append(piece('e1', 'white', WKING, 100))
-
+pieces = [blp_b, wp_a]
     
 while True:
 
     for p in pieces:
-        p.draw(WIN)
+        p.draw()
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
             pygame.quit()
@@ -272,5 +317,5 @@ while True:
                 pos = pygame.mouse.get_pos()
                 for i in pieces:
                     if i.click(pos):
-                        i.draw_moves(WIN)
+                        i.check_moves()
     pygame.display.update()
