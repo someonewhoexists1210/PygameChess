@@ -316,7 +316,23 @@ class piece:
 
     def draw_moves(self):
         for x in self.moves:
-            pygame.draw.circle(WIN, (125,125,125), (boardpositions[x][0] + 25, boardpositions[x][1] + 25), 10)
+            if type(x) is tuple:
+                pygame.draw.rect(WIN, (125,125,125), (boardpositions[x[0]][0] + 5, boardpositions[x[0]][1] + 5 , 40, 40))
+                pygame.draw.rect(WIN, (255,255,255), (boardpositions[x[0]][0] + 10, boardpositions[x[0]][1] + 10 , 30, 30))
+            else:
+                pygame.draw.circle(WIN, (125,125,125), (boardpositions[x][0] + 25, boardpositions[x][1] + 25), 10)
+
+    def remove_moves(self):
+        toremove = []
+        for l in self.moves:
+            if l not in boardpositions:
+                toremove.append(l)
+        for n in self.moves:
+            if square_occupied(n, self.isBlack):
+                toremove.append(n)
+        for n in toremove:
+            if n in self.moves:
+                self.moves.remove(n)
 
     def click(self, pos):
         x1 = pos[0]
@@ -353,24 +369,8 @@ class pawn(piece):
         
         diags = diagonal(self.square, self)
         if diags != None:
-            try:
-                #Draw capture piece rect
-                pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5 , 40, 40))
-                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
-
-                
-                pygame.draw.rect(WIN, (125,255,125), (boardpositions[diags[1]][0] + 5, boardpositions[diags[1]][1] + 5 , 40, 40))
-                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[1]][0] + 10, boardpositions[diags[1]][1] + 10 , 30, 30))
-
-
-            except:
-                if diags != []:
-                    pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5, 40, 40))
-                    pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
-
-
-                
-
+            for l in diags:
+                self.moves.add(l)
         self.draw_moves()
 
 
