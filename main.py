@@ -158,6 +158,84 @@ class piece:
             return True
         else:
             return False
+        
+    def capture(self, capturedpiece, player):
+        pieces.remove(capturedpiece)
+        player.points += capturedpiece.worth
+        self.x, self.y = boardpositions[capturedpiece.square]
+        
+class pawn(piece):
+    def __init__(self, square, color, img):
+        super().__init__(square, color, img, 1)
+
+    def check_moves(self):
+        pass
+    
+
+def diagonal(sq, piece=None):
+    if piece != 'pawn':
+        sq1 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])+1)
+        sq2 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])+1)
+        return [sq1, sq2]
+    tempsq = sq
+    tr = []
+    bl = []
+    tl = []
+    br = []
+    
+    # Check Top-Right Diagonal
+    while tempsq[0] != 'h' and tempsq[1] != ' 8':
+            tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])+1)
+            if square_occupied(tempsq):
+                break
+            tr.append(tempsq)
+            
+    #Reset while loop
+    tempsq = sq
+
+    # Check Bottom-Left Diagonal
+    while tempsq[0] != 'a' and tempsq[1] != '1':
+        tempsq = abcs[abcs.index(tempsq[0]) - 1]+str(int(tempsq[1])-1)
+        if square_occupied(tempsq):
+                break
+        bl.append(tempsq)
+
+
+    tempsq = sq
+    
+    # Check Top-Left Diagonal
+    while tempsq[0] != 'a' and tempsq[1] != '8':
+        tempsq = abcs[abcs.index(tempsq[0]) - 1]+str(int(tempsq[1])+1)
+        if square_occupied(tempsq):
+                break
+        tl.append(tempsq)
+
+    tempsq = sq
+
+    # Check Bottom-Right Diagonal
+    while tempsq[0] != 'h' and tempsq[1] != '1':
+        tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])-1)
+        if square_occupied(tempsq):
+                break
+        br.append(tempsq)
+
+    return tr + tl + br +bl
+
+
+
+def check_pawn_moves(pawn):
+    if pawn.color == 'b':
+        if  not square_occupied(pawn.square[0]+ str(int(pawn.square[1])-1)):
+            pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])-1))
+            if pawn.square[1] == '7' and not square_occupied(pawn.square[0]+ str(int(pawn.square[1])-2)):
+                pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])-2))
+    elif pawn.color == 'w':
+        if  not square_occupied(pawn.square[0]+ str(int(pawn.square[1])+1)):
+            pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])+1))
+            if pawn.square[1] == '7' and not square_occupied(pawn.square[0]+ str(int(pawn.square[1])+2)):
+                pawn.moves.add(pawn.square[0]+ str(int(pawn.square[1])+2))
+    
+
 
 
 for m in range(0, 8):
