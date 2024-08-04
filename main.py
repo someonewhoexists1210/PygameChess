@@ -100,6 +100,11 @@ WBISHOP = pygame.transform.scale(pygame.image.load('imgs/wbishop.png'), (50,50))
 WQUEEN = pygame.transform.scale(pygame.image.load('imgs/wqueen.png'), (50,50))
 WKING = pygame.transform.scale(pygame.image.load('imgs/wking.png'), (50,50))
 
+right = lambda x: abcs[abcs.index(x[0]) + 1] + x[1]
+left = lambda x: abcs[abcs.index(x[0]) - 1] + x[1]
+up = lambda x: x[0] + str(int(x[1])+1)
+down = lambda x: x[0] + str(int(x[1])-1)
+
 #Current pieces on board
 pieces = []
 
@@ -374,6 +379,63 @@ class pawn(piece):
         self.draw_moves()
 
 
+class rook(piece):
+    def __init__(self, square, isBlack, img):
+        super().__init__(square, isBlack, img, 5)
+
+    def check_moves(self):
+        self.moves = straight(self.square, self)
+        self.draw_moves()
+
+class bishop(piece):
+    def __init__(self, square, isBlack, img):
+        super().__init__(square, isBlack, img, 3)
+
+    def check_moves(self):
+        self.moves = diagonal(self.square, self)
+        self.draw_moves()
+
+class queen(piece):
+    def __init__(self, square, isBlack, img):
+        super().__init__(square, isBlack, img, 9)
+
+    def check_moves(self):
+        self.moves = diagonal(self.square, self) + straight(self.square, self)
+        self.draw_moves()
+
+class king(piece):
+    def __init__(self, square, isBlack, img):
+        super().__init__(square, isBlack, img, 10000000000000000)
+        self.in_check = False
+
+    def check_moves(self):
+        self.moves = [
+            up(self.square),
+            down(self.square),
+            left(self.square),
+            right(self.square)] + diagonal(self.square, self)
+        self.remove_moves()
+        
+
+class knight(piece):
+    def __init__(self, square, isBlack, img):
+        super().__init__(square, isBlack, img, 3)
+
+    def check_moves(self):
+        self.moves = [
+            right(self.square)[0] + str(int(right(self.square)[1]) + 2),
+            left(self.square)[0] + str(int(right(self.square)[1]) + 2),
+            right(self.square)[0] + str(int(right(self.square)[1]) - 2),
+            left(self.square)[0] + str(int(right(self.square)[1]) - 2),
+            right(right(self.square))[0]+ up(self.square)[1],
+            left(left(self.square))[0]+ up(self.square)[1],
+            right(right(self.square))[0]+ down(self.square)[1],
+            left(left(self.square))[0]+ down(self.square)[1]
+        ]
+        self.remove_moves()
+        self.draw_moves()
+
+
 blp_a= pawn('a7', True, BPAWN)
 blp_b= pawn('b3', True, BPAWN)
 blp_c= pawn('c7', True, BPAWN)
@@ -392,8 +454,35 @@ wp_f= pawn('f2', False, WPAWN)
 wp_g= pawn('g2', False, WPAWN)
 wp_h= pawn('h2', False, WPAWN)
 
+bl_r1 = rook('a8', True, BROOK)
+bl_r2 = rook('h8', True, BROOK)
 
-pieces = [blp_b, wp_a]
+w_r1 = rook('a1', False, WROOK)
+w_r2 = rook('h1', False, WROOK)
+
+bl_kt1 = knight('b8', True, BKNIGHT)
+bl_kt2 = knight('g8', True, BKNIGHT)
+w_kt1 = knight('b1', False, WKNIGHT)
+w_kt2 = knight('g1', False, WKNIGHT)
+
+bl_b1 = bishop('c8', True, BBISHOP)
+bl_b2 = bishop('f8', True, BBISHOP)
+w_b1 = bishop('c1', False, WBISHOP)
+w_b2 = bishop('f1', False, WBISHOP)
+
+bl_q = queen('d8', True, BQUEEN)
+bl_k = king('e8', True, BKING)
+w_q = queen('d1', False, WQUEEN)
+w_k = king('e1', False, WKING)
+
+pieces = [
+    wp_a, wp_b, wp_c, wp_d, wp_e, wp_f, wp_g, wp_h,
+    blp_a, blp_b, blp_c, blp_d, blp_e, blp_f, blp_g, blp_h,
+    bl_r1, bl_r2, w_r1, w_r2,
+    bl_kt1, bl_kt2, w_kt1, w_kt2,
+    bl_b1, bl_b2, w_b1, w_b2,
+    bl_q, w_q, bl_k, w_k
+    ]
     
 def main():
     clicked_on_piece= None
