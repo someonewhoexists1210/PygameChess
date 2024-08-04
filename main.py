@@ -9,7 +9,7 @@ WIN = pygame.display.set_mode((WID,HEI))
 pygame.display.set_caption('Chess')
 
 
-abcs = 'abcdefgh'
+abcs = '123abcdefghij'
 
 boardpositions = {
 'a1': (0,350),
@@ -117,6 +117,7 @@ for i in range(0,8):
                         pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
 
 
+
 def square_occupied(sq, isBlack =None):
     if isBlack == None:
         for l in pieces:
@@ -129,82 +130,6 @@ def square_occupied(sq, isBlack =None):
                 if l.isBlack == isBlack:
                     return True
         return False
-
-class piece:
-    def __init__(self, square, isBlack, img, worth):
-        self.square = square
-        self.x, self.y = boardpositions[square]
-        self.moves = set([])
-        self.isBlack = isBlack
-        self.img = img
-        self.worth = worth
-        
-
-    def draw(self):
-        WIN.blit(self.img, (self.x, self.y))
-
-    def draw_moves(self):
-        for x in self.moves:
-            pygame.draw.circle(WIN, (125,125,125), (boardpositions[x][0] + 25, boardpositions[x][1] + 25), 10)
-
-    def click(self, pos):
-        x1 = pos[0]
-        y1 = pos[1]
-        if self.x <= x1 <= self.x + 50 and self.y <= y1 < self.y + 50:
-            return True
-        else:
-            return False
-
-    def capture(self, capturedpiece, player):
-        pieces.remove(capturedpiece)
-        player.points += capturedpiece.worth
-        self.x, self.y = boardpositions[capturedpiece.square]
-    
-class pawn(piece):
-    def __init__(self, square, isBlack, img):
-        super().__init__(square, isBlack, img, 1)
-        
-    def check_moves(self): 
-        if self.isBlack:
-            sq_in_front = self.square[0] + str(int(self.square[1]) - 1)
-            sq2_in_front = self.square[0] + str(int(self.square[1]) - 2)
-            if not square_occupied(sq_in_front):
-                self.moves.add(sq_in_front)
-                if self.square[1] == '7' and not square_occupied(sq2_in_front):
-                    self.moves.add(sq2_in_front)
-        else:
-            sq_in_front = self.square[0] + str(int(self.square[1]) + 1)
-            sq2_in_front = self.square[0] + str(int(self.square[1]) + 2)
-            if  not square_occupied(sq2_in_front):
-                self.moves.add(sq_in_front)
-                if self.square[1] == '2' and not square_occupied(sq2_in_front):
-                    self.moves.add(sq2_in_front)
-        
-        diags = diagonal(self.square, self)
-        if diags != None:
-            try:
-                #Draw capture piece rect
-                pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5 , 40, 40))
-                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
-
-                
-                pygame.draw.rect(WIN, (125,255,125), (boardpositions[diags[1]][0] + 5, boardpositions[diags[1]][1] + 5 , 40, 40))
-                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[1]][0] + 10, boardpositions[diags[1]][1] + 10 , 30, 30))
-
-
-            except:
-                if diags != []:
-                    pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5, 40, 40))
-                    pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
-
-
-                
-
-        self.draw_moves()
-    
-    
-    
-
 def diagonal(sq, piece=None):
     if piece.worth == 1:
         result = []
@@ -283,6 +208,78 @@ def diagonal(sq, piece=None):
 
     return tr + tl + br +bl
 
+class piece:
+    def __init__(self, square, isBlack, img, worth):
+        self.square = square
+        self.x, self.y = boardpositions[square]
+        self.moves = set([])
+        self.isBlack = isBlack
+        self.img = img
+        self.worth = worth
+        
+
+    def draw(self):
+        WIN.blit(self.img, (self.x, self.y))
+
+    def draw_moves(self):
+        for x in self.moves:
+            pygame.draw.circle(WIN, (125,125,125), (boardpositions[x][0] + 25, boardpositions[x][1] + 25), 10)
+
+    def click(self, pos):
+        x1 = pos[0]
+        y1 = pos[1]
+        if self.x <= x1 <= self.x + 50 and self.y <= y1 < self.y + 50:
+            return True
+        else:
+            return False
+
+    def capture(self, capturedpiece, player):
+        pieces.remove(capturedpiece)
+        player.points += capturedpiece.worth
+        self.x, self.y = boardpositions[capturedpiece.square]
+    
+class pawn(piece):
+    def __init__(self, square, isBlack, img):
+        super().__init__(square, isBlack, img, 1)
+        
+    def check_moves(self): 
+        if self.isBlack:
+            sq_in_front = self.square[0] + str(int(self.square[1]) - 1)
+            sq2_in_front = self.square[0] + str(int(self.square[1]) - 2)
+            if not square_occupied(sq_in_front):
+                self.moves.add(sq_in_front)
+                if self.square[1] == '7' and not square_occupied(sq2_in_front):
+                    self.moves.add(sq2_in_front)
+        else:
+            sq_in_front = self.square[0] + str(int(self.square[1]) + 1)
+            sq2_in_front = self.square[0] + str(int(self.square[1]) + 2)
+            if  not square_occupied(sq2_in_front):
+                self.moves.add(sq_in_front)
+                if self.square[1] == '2' and not square_occupied(sq2_in_front):
+                    self.moves.add(sq2_in_front)
+        
+        diags = diagonal(self.square, self)
+        if diags != None:
+            try:
+                #Draw capture piece rect
+                pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5 , 40, 40))
+                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
+
+                
+                pygame.draw.rect(WIN, (125,255,125), (boardpositions[diags[1]][0] + 5, boardpositions[diags[1]][1] + 5 , 40, 40))
+                pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[1]][0] + 10, boardpositions[diags[1]][1] + 10 , 30, 30))
+
+
+            except:
+                if diags != []:
+                    pygame.draw.rect(WIN, (125,125,125), (boardpositions[diags[0]][0] + 5, boardpositions[diags[0]][1] + 5, 40, 40))
+                    pygame.draw.rect(WIN, (255,255,255), (boardpositions[diags[0]][0] + 10, boardpositions[diags[0]][1] + 10 , 30, 30))
+
+
+                
+
+        self.draw_moves()
+
 
 blp_a= pawn('a7', True, BPAWN)
 blp_b= pawn('b3', True, BPAWN)
@@ -305,17 +302,57 @@ wp_h= pawn('h2', False, WPAWN)
 
 pieces = [blp_b, wp_a]
     
-while True:
+def main():
+    clicked_on_piece= None
+    run = True
+    clock = pygame.time.Clock()
 
-    for p in pieces:
-        p.draw()
-    for event in pygame.event.get():
-        if event.type==pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-                for i in pieces:
-                    if i.click(pos):
-                        i.check_moves()
-    pygame.display.update()
+    def redraw():
+        nonlocal clicked_on_piece
+
+        #Board Initialization
+        for i in range(0,8):
+            for n in range(8):
+                if i%2==0:
+                    if n%2==1:
+                        pygame.draw.rect(WIN, (0,153,51), (n*50,i*50,50,50))
+                    else:
+                        pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
+                else:
+                    if n%2==0:
+                        pygame.draw.rect(WIN, (0,153,51), (n*50,i*50,50,50))
+                    else:
+                        pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
+
+        
+
+        #Draw Piece Selected
+        if clicked_on_piece != None:
+            clicked_on_piece.check_moves()
+            print(clicked_on_piece.moves)
+
+        #Blit pieces
+        for piec in pieces:
+            piec.draw()
+            
+        #Event Checking
+        pos = pygame.mouse.get_pos()
+        for event in pygame.event.get():
+                if event.type==pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    for x in pieces:
+                        if x.click(pos):
+                            clicked_on_piece = x
+                            
+
+    while run:
+            clock.tick(60)
+            redraw()
+            for event in pygame.event.get():
+                if event.type==pygame.QUIT:
+                    pygame.quit()
+                    sys.exit() 
+            pygame.display.update()
+main()
