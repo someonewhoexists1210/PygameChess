@@ -114,6 +114,15 @@ WBISHOP = pygame.transform.scale(pygame.image.load('imgs/wbishop.png'), (50,50))
 WQUEEN = pygame.transform.scale(pygame.image.load('imgs/wqueen.png'), (50,50))
 WKING = pygame.transform.scale(pygame.image.load('imgs/wking.png'), (50,50))
 
+IMGS = {
+        'pawn': (WPAWN, BPAWN),
+        'knight': (WKNIGHT, BKNIGHT),
+        'bishop': (WBISHOP, BBISHOP),
+        'rook': (WROOK, BROOK),
+        'queen': (WQUEEN, BQUEEN),
+        'king': (WKING, BKING),
+    }
+
 right = lambda x: abcs[abcs.index(x[0]) + 1] + x[1]
 left = lambda x: abcs[abcs.index(x[0]) - 1] + x[1]
 up = lambda x: x[0] + str(int(x[1])+1)
@@ -314,12 +323,12 @@ def straight(sq, piece):
     return t + b + r + l
 
 class piece:
-    def __init__(self, square, isBlack, img, worth):
+    def __init__(self, square, isBlack, worth):
         self.square = square
-        self.x, self.y = boardpositions[square]
+        self.x, self.y = boardpositions[self.square]
         self.moves = set([])
         self.isBlack = isBlack
-        self.img = img
+        self.img = IMGS[self.__class__.__name__][self.isBlack]
         self.worth = worth
         
 
@@ -371,8 +380,8 @@ class piece:
         self.moves = set([])
 
 class pawn(piece):
-    def __init__(self, square, isBlack, img):
-        super().__init__(square, isBlack, img, 1)
+    def __init__(self, square, isBlack):
+        super().__init__(square, isBlack, 1)
         
     def check_moves(self): 
         if self.isBlack:
@@ -398,34 +407,57 @@ class pawn(piece):
         self.remove_moves()
         self.draw_moves()
 
+    def promote(self):
+        p = input('Promote to: ')
+        if p == 'queen':
+            pieces.append(queen(self.square, self.isBlack))
+        elif p == 'rook':
+            pieces.append(rook(self.square, self.isBlack))
+        elif p == 'bishop':
+            pieces.append(bishop(self.square, self.isBlack))
+        elif p == 'knight':
+            pieces.append(knight(self.square, self.isBlack))
+        pieces.remove(self)
+
+    def capture(self, capturedpiece, player):
+        super().capture(capturedpiece, player)
+        if capturedpiece.square[1] == '8':
+            self.promote()
+            
+    
+    def move(self, sq):
+        super().move(sq)
+        if self.square[1] == '8':
+            self.promote()
+            
 
 class rook(piece):
-    def __init__(self, square, isBlack, img):
-        super().__init__(square, isBlack, img, 5)
+    def __init__(self, square, isBlack):
+        super().__init__(square, isBlack, 5)
 
     def check_moves(self):
         self.moves = straight(self.square, self)
         self.draw_moves()
 
 class bishop(piece):
-    def __init__(self, square, isBlack, img):
-        super().__init__(square, isBlack, img, 3)
+    def __init__(self, square, isBlack):
+        super().__init__(square, isBlack, 3)
 
     def check_moves(self):
         self.moves = diagonal(self.square, self)
         self.draw_moves()
 
 class queen(piece):
-    def __init__(self, square, isBlack, img):
-        super().__init__(square, isBlack, img, 9)
+    def __init__(self, square, isBlack):
+        super().__init__(square, isBlack, 9)
 
     def check_moves(self):
         self.moves = diagonal(self.square, self) + straight(self.square, self)
         self.draw_moves()
 
 class king(piece):
-    def __init__(self, square, isBlack, img):
-        super().__init__(square, isBlack, img, 10000000000000000)
+    def __init__(self, square, isBlack):
+        super().__init__(square, isBlack, 10000000000000000)
         self.in_check = False
 
     def check_moves(self):
@@ -438,8 +470,8 @@ class king(piece):
         
 
 class knight(piece):
-    def __init__(self, square, isBlack, img):
-        super().__init__(square, isBlack, img, 3)
+    def __init__(self, square, isBlack):
+        super().__init__(square, isBlack, 3)
 
     def check_moves(self):
         self.moves = [
