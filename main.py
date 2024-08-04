@@ -118,16 +118,20 @@ for i in range(0,8):
 
 
 
-def square_occupied(sq, isBlack =None):
+def square_occupied(sq, isBlack =None, returnpiece=False):
     if isBlack == None:
         for l in pieces:
             if l.square == sq:
+                if returnpiece:
+                    return l
                 return True
         return False
     else:
         for l in pieces:
             if l.square == sq:
                 if l.isBlack == isBlack:
+                    if returnpiece:
+                        return l
                     return True
         return False
 def diagonal(sq, piece=None):
@@ -136,13 +140,13 @@ def diagonal(sq, piece=None):
         if piece.isBlack:
             if sq[0] !='a':
                 sq1 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])-1)
-                if square_occupied(sq1, not piece.isBlack):
-                    result.append(sq1)
+                if square_occupied(sq1, False):
+                    result.append((sq1, ''))
 
             if sq[0] != 'h':
                 sq2 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])-1)
-                if square_occupied(sq2, not piece.isBlack):
-                    result.append(sq2)
+                if square_occupied(sq2, False):
+                    result.append((sq2, ''))
 
                
             return result
@@ -150,18 +154,22 @@ def diagonal(sq, piece=None):
             
             if sq[0] !='a':
                 sq1 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])+1)
-                if square_occupied(sq1, not piece.isBlack):
-                    result.append(sq1)
+                if square_occupied(sq1, True):
+                    result.append((sq1, ''))
 
             if sq[0] != 'h':
                 sq2 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])+1)
-                if square_occupied(sq2, not piece.isBlack):
-                    result.append(sq2)
+                if square_occupied(sq2, True):
+                    result.append((sq2, ''))
 
                
             return result
             
-
+    elif piece.worth > 10:
+        return [abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])+1),
+                abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])-1),
+                abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])+1),
+                abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])-1)]
             
 
     tempsq = sq
@@ -171,11 +179,16 @@ def diagonal(sq, piece=None):
     br = []
     
     # Check Top-Right Diagonal
-    while tempsq[0] != 'h' and tempsq[1] != ' 8':
-            tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])+1)
-            tr.append(tempsq)
-            if square_occupied(tempsq):
+    while tempsq[0] != 'h' and tempsq[1] != '8':
+        tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])+1)
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
                 break
+            else:
+                tr.append((tempsq, ''))
+                break
+        tr.append(tempsq)
             
     #Reset while loop
     tempsq = sq
@@ -183,30 +196,110 @@ def diagonal(sq, piece=None):
     # Check Bottom-Left Diagonal
     while tempsq[0] != 'a' and tempsq[1] != '1':
         tempsq = abcs[abcs.index(tempsq[0]) - 1]+str(int(tempsq[1])-1)
-        if square_occupied(tempsq):
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
+                break
+            else:
+                bl.append((tempsq, ''))
                 break
         bl.append(tempsq)
 
 
     tempsq = sq
-    
     # Check Top-Left Diagonal
     while tempsq[0] != 'a' and tempsq[1] != '8':
         tempsq = abcs[abcs.index(tempsq[0]) - 1]+str(int(tempsq[1])+1)
-        if square_occupied(tempsq):
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
                 break
-        tl.append(tempsq)
+            else:
+                tr.append((tempsq, ''))
+                break
+        tr.append(tempsq)
 
     tempsq = sq
 
     # Check Bottom-Right Diagonal
     while tempsq[0] != 'h' and tempsq[1] != '1':
         tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])-1)
-        if square_occupied(tempsq):
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
                 break
-        br.append(tempsq)
+            else:
+                tr.append((tempsq, ''))
+                break
+        tr.append(tempsq)
 
     return tr + tl + br +bl
+
+def straight(sq, piece):
+    t = []
+    b = []
+    r = []
+    l = []
+
+
+    tempsq = sq
+    #Check File Ahead
+    while tempsq[1] != '8':
+        tempsq = tempsq[0] + str((int(tempsq[1])+1))
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
+                break
+            else:
+                t.append((tempsq, ''))
+                break
+        t.append(tempsq)
+    
+
+    tempsq = sq
+    #Check File Below
+    while tempsq[1] != '1':
+        tempsq = tempsq[0] + str((int(tempsq[1])-1))
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
+                break
+            else:
+                b.append((tempsq, ''))
+
+                break
+        b.append(tempsq)
+
+
+    tempsq = sq
+    #Check Row Right
+    while tempsq[0] != 'h':
+        tempsq = abcs[abcs.index(tempsq[0])+1] + tempsq[1]
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
+                break
+            else:
+                r.append((tempsq, ''))
+
+                break
+        r.append(tempsq)
+
+
+    tempsq = sq
+    #Check File Ahead
+    while tempsq[0] != 'a':
+        tempsq = abcs[abcs.index(tempsq[0])-1] + tempsq[1]
+        occupied = square_occupied(tempsq, returnpiece=True)
+        if occupied != False:
+            if piece.isBlack == occupied.isBlack:
+                break
+            else:
+                l.append((tempsq, ''))
+                break
+        l.append(tempsq)
+    
+    return t + b + r + l
 
 class piece:
     def __init__(self, square, isBlack, img, worth):
@@ -337,6 +430,7 @@ def main():
             
         #Event Checking
         pos = pygame.mouse.get_pos()
+        pygame.display.update()
         for event in pygame.event.get():
                 if event.type==pygame.QUIT:
                     pygame.quit()
@@ -345,14 +439,15 @@ def main():
                     for x in pieces:
                         if x.click(pos):
                             clicked_on_piece = x
+        
                             
 
     while run:
-            clock.tick(60)
-            redraw()
-            for event in pygame.event.get():
-                if event.type==pygame.QUIT:
-                    pygame.quit()
-                    sys.exit() 
-            pygame.display.update()
+        clock.tick(60)
+        redraw()
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                sys.exit() 
+            
 main()
