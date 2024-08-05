@@ -574,6 +574,62 @@ def checkforchecks():
                     if mv[0] == wking.square:
                         wking.in_check = True
 
+
+    
+#white in check
+def responsetocheck(sidechecked):
+    ps = {
+        'white': (wpieces, wking),
+        'black': (bpieces, bking)
+    }
+    global legalmoves
+    legalmoves = []
+    checkedsidepieces, checkedking = ps[sidechecked]
+    if sidechecked == 'white':
+        checkingsidepieces = ps['black'][0]
+    else:
+        checkingsidepieces = ps['white'][0]
+
+    
+    for x in checkedsidepieces: 
+        for c in x.moves: 
+
+            orisq = x.square
+
+            if type(c) is tuple: 
+                    takenp = square_occupied(c[0], returnpiece=True)
+                    pieces.remove(takenp)
+                    checkingsidepieces.remove(takenp)
+                    x.square = c[0]
+
+            else: x.square = c
+
+            for piec in checkingsidepieces:
+                piec.check_moves()
+                for m in piec.moves:
+                    if type(m) is tuple and m[0] == checkedking.square:
+                        break
+                else:
+                    continue
+                break
+            else:
+                legalmoves.append((c, x))
+                
+            if type(c) is tuple:
+                pieces.append(takenp)
+                checkingsidepieces.append(takenp)
+                    
+            x.square = orisq
+    if legalmoves == []:
+        print(sidechecked.upper() + ' has been checkmated'.upper())
+        sys.exit()
+    for pi in checkedsidepieces:
+        pi.moves = set([])
+    for m in legalmoves:
+        m[1].moves.add(m[0])
+
+
+
 def checkmove(pos):
     global clicked_on_piece, whites_turn, checkingpieces
     for mv in clicked_on_piece.moves:
@@ -608,7 +664,12 @@ def main():
         #Blit pieces
         for piec in pieces:
             piec.draw()
-
+            
+        checkforchecks()
+        if whites_turn:
+            responsetocheck('white')
+        else:
+            responsetocheck('black')
 
         #Event Checking
         pos = pygame.mouse.get_pos()
