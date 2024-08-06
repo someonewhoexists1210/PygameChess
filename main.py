@@ -134,6 +134,7 @@ right = lambda x: abcs[abcs.index(x[0]) + 1] + x[1]
 left = lambda x: abcs[abcs.index(x[0]) - 1] + x[1]
 up = lambda x: x[0] + str(int(x[1])+1)
 down = lambda x: x[0] + str(int(x[1])-1)
+tomins = lambda x: f"{math.floor(x/60)}:{(f'0{x%60}' if x%60 < 10 else x%60) if x % 60 != 0 else '00'}"
 
 #Misc Variables
 clicked_on_piece = None
@@ -632,6 +633,9 @@ def main():
     run = True
     clock = pygame.time.Clock()
 
+    wtime = 10
+    btime = 300
+
     wking = king('e1', 0)
     bking = king('e8', 1)
 
@@ -722,9 +726,29 @@ def main():
 
     while run:
         clock.tick(60)
+        if whites_turn:
+            wtime -= 0.016666666666666666666
+            if wtime <= 0:
+                print("WHITE LOST ON TIME")
+                sys.exit()
+        else:
+            btime -= 0.016666666666666666666
+            if btime <= 0:
+                print("BLACK LOST ON TIME")
+                sys.exit()
         redraw()
         wpieces = [x for x in pieces if not x.isBlack]
         bpieces = [x for x in pieces if x.isBlack]
+        
+
+        
+        
+        wtimelabel = main_font.render(tomins(round(wtime)), 1, (255, 255, 255))
+        btimelabel = main_font.render(tomins(round(btime)), 1, (255, 255, 255))
+
+        WIN.blit(wtimelabel, (450, 300))
+        WIN.blit(btimelabel, (450, 100))
+
         
     
         for event in pygame.event.get():
