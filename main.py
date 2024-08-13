@@ -1,6 +1,8 @@
 import pygame
 import sys, math, os
 from features import Button, InputBox, MYSQL
+from dotenv import load_dotenv
+load_dotenv()
 
 #Pygame Intialization
 pygame.font.init()
@@ -123,7 +125,11 @@ whites_turn = True
 movesdone = 0
 positions = []
 file = []
-executer = MYSQL(os.path.abspath('C:\Program Files\MySQL\MySQL Server 8.0\bin'), 'localhost', 'root', 'Darsh1210', 'chess')
+DB_PATH = os.getenv('DB_PATH')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+executer = MYSQL(os.path.abspath(DB_PATH), 'localhost', DB_USER, DB_PASSWORD, DB_NAME)
 
 #Useful lambdas
 right = lambda x: abcs[abcs.index(x[0]) + 1] + x[1]
