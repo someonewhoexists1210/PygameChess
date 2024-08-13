@@ -9,6 +9,13 @@ pygame.display.set_caption('Chess')
 pygame.font.init()
 main_font = pygame.font.SysFont("comicsans", 30)
 
+
+resultss = {
+    'w': '1-0',
+    'b': '0-1',
+    'd': '1/2-1/2'
+}
+
 boardpositions = {
 'a1': (0,350),
 'a2': (0,300),
@@ -83,22 +90,10 @@ boardpositions = {
 'h8': (350,0)
 }
 
-# Images
+# Background
 BG = pygame.image.load('imgs/bg.png')
-
-BPAWN = pygame.transform.scale(pygame.image.load('imgs/blpawn.png'), (50,50))
-BROOK = pygame.transform.scale(pygame.image.load('imgs/blrook.png'), (50,50))
-BKNIGHT = pygame.transform.scale(pygame.image.load('imgs/blknight.png'), (50,50))
-BBISHOP = pygame.transform.scale(pygame.image.load('imgs/blbishop.png'), (50,50))
-BQUEEN = pygame.transform.scale(pygame.image.load('imgs/blqueen.png'), (50,50))
-BKING = pygame.transform.scale(pygame.image.load('imgs/blking.png'), (50,50))
-
-WPAWN = pygame.transform.scale(pygame.image.load('imgs/wpawn.png'), (50,50))
-WROOK = pygame.transform.scale(pygame.image.load('imgs/wrook.png'), (50,50))
-WKNIGHT = pygame.transform.scale(pygame.image.load('imgs/wknight.png'), (50,50))
-WBISHOP = pygame.transform.scale(pygame.image.load('imgs/wbishop.png'), (50,50))
-WQUEEN = pygame.transform.scale(pygame.image.load('imgs/wqueen.png'), (50,50))
-WKING = pygame.transform.scale(pygame.image.load('imgs/wking.png'), (50,50))
+#Background for side panel
+BG2 = pygame.image.load('imgs/bg2.png')
 
 IMGS = {
         'pawn': (pygame.transform.scale(pygame.image.load('imgs/wpawn.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blpawn.png'), (50,50))),
@@ -109,6 +104,14 @@ IMGS = {
         'king': (pygame.transform.scale(pygame.image.load('imgs/wking.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blking.png'), (50,50))),
     }
 
+
+#Current pieces on board
+pieces = []
+wpieces = []
+bpieces = []
+bking = None
+wking = None
+
 #Misc Variables
 abcs = '123abcdefghij'
 clicked_on_piece = None
@@ -117,7 +120,7 @@ piece_taken = 0
 whites_turn = True
 movesdone = 0
 positions = []
-file = open('game.txt', 'w+')
+file = []
 
 #Useful lambdas
 right = lambda x: abcs[abcs.index(x[0]) + 1] + x[1]
@@ -421,6 +424,9 @@ class piece:
         else:
             return False
 
+    def check_moves(self):
+        pass
+
     #Capture piece
     def capture(self, capturedpiece):
         pieces.remove(capturedpiece)
@@ -433,6 +439,7 @@ class piece:
             return
         self.square = sq
         self.x, self.y = boardpositions[self.square]    
+        self.check_moves()
         
 #Pawn Class
 class pawn(piece):
@@ -482,25 +489,50 @@ class pawn(piece):
         self.moves = mvs
         self.remove_moves()
         
-
-    def promote(self):
-        p = input('Promote to: ')
-        if p == 'queen':
-            pieces.append(queen(self.square, self.isBlack))
-        elif p == 'rook':
-            pieces.append(rook(self.square, self.isBlack))
-        elif p == 'bishop':
-            pieces.append(bishop(self.square, self.isBlack))
-        elif p == 'knight':
-            pieces.append(knight(self.square, self.isBlack))
-        pieces.remove(self)
-
     def capture(self, capturedpiece):
         super().capture(capturedpiece)
+        global promoted
         if capturedpiece.square[1] == '8':
-            self.promote()
+            q = Button(WIN, 100, 190, "Queen", (255, 255, 255), autofit=False, fontsize= 15, screensize = (WID, HEI), size = (50, 20))
+            r = Button(WIN, 150, 190, "Rook", (255, 255, 255), autofit=False, fontsize= 15, screensize = (WID, HEI), size = (50, 20))
+            b = Button(WIN, 200, 190, "Bishop", (255, 255, 255), autofit=False, fontsize= 15, screensize = (WID, HEI), size = (50, 20))
+            k = Button(WIN, 250, 190, "Knight", (255, 255, 255), autofit=False, fontsize= 15, screensize = (WID, HEI), size = (50, 20))
             
-    
+
+            x = True
+            while x:
+                q.draw()
+                r.draw()
+                b.draw()
+                k.draw()
+
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if q.click(pygame.mouse.get_pos()):
+                            pieces.append(queen(self.square, self.isBlack))
+                            to = 'Q'
+                            x = False
+                        if r.click(pygame.mouse.get_pos()):
+                            pieces.append(rook(self.square, self.isBlack))
+                            to = 'R'
+                            x = False
+                        if b.click(pygame.mouse.get_pos()):
+                            pieces.append(bishop(self.square, self.isBlack))
+                            to = 'B'
+                            x = False
+                        if k.click(pygame.mouse.get_pos()):
+                            pieces.append(knight(self.square, self.isBlack))
+                            to = 'K'
+                            x = False
+            
+                pygame.display.update()
+            promoted = (True, to)
+            pieces.remove(self)
+
     def move(self, sq, cp=None):
         global pawnpushed                
         super().move(sq, cp)
@@ -512,10 +544,8 @@ class pawn(piece):
                     self.square = cp.square[0] + str(int(cp.square[1]) + 1)
                 self.x, self.y = boardpositions[self.square]   
         pawnpushed = 0
-        if self.square[1] == '8':
-            self.promote()
-            
 
+#Rook Class
 class rook(piece):
     def __init__(self, square, isBlack):
         super().__init__(square, isBlack, 5)
@@ -649,7 +679,7 @@ def checkforchecks():
                 if type(mv) is tuple:
                     if mv[0] == bking.square:
                         bking.in_check = True
-                          
+                        
     else:
         for p in bpieces:
             for mv in p.moves:
@@ -710,6 +740,43 @@ def setlegalmoves(sidechecked):
     for m in legalmoves:
         m[1].moves.add(m[0])
 
+#Checks if notation need to be like Nbd2
+def notationhelp():
+    x = []
+    y = []
+    locs = []
+    
+    for p in pieces:
+        for mv in p.moves:
+            x.append((mv, type(p), p.isBlack))
+            y.append(p.square)
+            
+    if tuple([last_move[1], type(last_move[0]), last_move[0].isBlack]) in x:
+        for _ in range(len(x)):
+            if x[_] == tuple([last_move[1], type(last_move[0]), last_move[0].isBlack]):
+                locs.append(y[_])
+           
+        if last_move[2] in locs:
+            if len(locs) == 2:
+                if locs[0][0] == locs[1][0]:
+                    return last_move[2][1]
+                else:
+                    return last_move[2][0]
+            if len(locs) >= 3:
+                toreturn = '  '
+                for _ in locs:
+                    if _ == last_move[2]:
+                        continue
+                    if _[1] == last_move[2][1]:
+                        toreturn = last_move[2][0] + toreturn if toreturn[0] != last_move[2][0] else toreturn
+                    if _[0] == last_move[2][0]:
+                        toreturn = toreturn + last_move[2][1] if toreturn[-1] != last_move[2][1] else toreturn
+                return toreturn.replace(" ", '')
+            
+        
+    
+    return ''
+    
 #Checks if move has been made and moves the chosen piece
 def checkmove(pos):
     global clicked_on_piece, whites_turn, piece_taken, pawnpushed, last_move, movesdone
@@ -723,13 +790,14 @@ def checkmove(pos):
         for p in pieces:
             p.check_moves()
         positions.append(get_position())
-        notation()
+        notation(additional = passtonotation)
 
     for mv in clicked_on_piece.moves:
         if clicked_on_piece == wking:
             if mv[-1] == 'p':
                 if mv[0] == 'g':
                     if sqclick('g1', pos):
+                        promoted = (False, None)
                         wking.move('g1')
                         wkrook.move('f1')
                         last_move = (wking, 'O-O')
@@ -738,6 +806,7 @@ def checkmove(pos):
                     continue
                 elif mv[0] == 'c':
                     if sqclick('c1', pos):
+                        promoted = (False, None)
                         wking.move('c1')
                         wqrook.move('d1')
                         last_move = (wking, 'O-O-O')
@@ -749,6 +818,7 @@ def checkmove(pos):
             if mv[-1] == 'p':
                 if mv[0] == 'g':
                     if sqclick('g8', pos):
+                        promoted = (False, None)
                         bking.move('g8')
                         bkrook.move('f8')
                         last_move = (bking, 'O-O')
@@ -757,6 +827,7 @@ def checkmove(pos):
                     continue
                 elif mv[0] == 'c':
                     if sqclick('c8', pos):
+                        promoted = (False, None)
                         bking.move('c8')
                         bqrook.move('d8')
                         last_move = (bking, 'O-O-O')
@@ -767,20 +838,25 @@ def checkmove(pos):
         if type(mv) is tuple:
             osq = clicked_on_piece.square
             if sqclick(mv[0], pos):
+                last_move = (clicked_on_piece, mv, osq)
+                passtonotation = notationhelp()
                 if mv[1] == '':
+                    promoted = (False, None)
                     clicked_on_piece.move(mv, square_occupied(mv[0],returnpiece=True))
                 else:
+                    promoted = (False, None)
                     clicked_on_piece.move(mv, mv[1])
                 piece_taken = 0
-                last_move = (clicked_on_piece, mv, osq)
                 movechange()      
                 return
         else:
             if sqclick(mv, pos):
                 osq = clicked_on_piece.square
+                promoted = (False, None)
+                last_move = (clicked_on_piece, mv, osq)
+                passtonotation = notationhelp()
                 clicked_on_piece.move(mv)
                 piece_taken += 0.5
-                last_move = (clicked_on_piece, mv, osq)
                 movechange()
                 return
 
@@ -842,7 +918,7 @@ def castles(color):
         selfking.moves.add(castlesqs[color]['qside'][1] + "p")
         
 #Writes Notation
-def notation():
+def notation(**kwargs):
     checkforchecks()
     if last_move == None: return
 
@@ -850,20 +926,25 @@ def notation():
     
     if type(x) is tuple:
         x = "x" + x[0]
-    if bking.in_check or wking.in_check:
-        x = x + '+'
+    
 
 
     if type(last_move[0]) is knight:
-        x = 'N' + x
+        x = 'N' + kwargs['additional'] + x
     elif type(last_move[0]) is pawn:
         if x[0] == 'x':
             x = last_move[2][0] + x
+        if promoted[0]:
+            x = x + '=' + promoted[1]
     else:
         if 'O' not in x:
-            x = type(last_move[0]).__name__[0].upper() + x
+            x = type(last_move[0]).__name__[0].upper() + kwargs['additional'] + x
 
-    file.write(x + " ")
+    if bking.in_check or wking.in_check:
+        x = x + '+'
+    
+
+    file.append(x)
     
 # Main game loop
 def main():
@@ -1036,17 +1117,13 @@ def result(res):
 
         for event in pygame.event.get():
                 if event.type==pygame.QUIT:
-                    file.close()
-                    f = open('game.txt', 'r+')
-                    pgn = f.read()
                     f1 = open('game.txt', 'w+')
+                    for n in file:
+                        f1.write(' ' + n )
                     if res.split()[-1] == "CHECKMATE":
-                        f1.write(pgn[:-2] + '#')
+                        f1.write('#')
                     elif draw[0]:
-                        if pgn[-2] != "+":
-                            f1.write(pgn[:-1] + '=')
-                        else:
-                            f1.write(pgn[:-2] + '=')
+                        f1.write('=')
                     pygame.quit()
                     sys.exit() 
         pygame.display.update()
