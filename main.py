@@ -1,5 +1,6 @@
 import pygame
-import sys, math
+import sys, math, os
+from features import Button, InputBox, MYSQL
 
 #Pygame Intialization
 pygame.font.init()
@@ -9,6 +10,7 @@ pygame.display.set_caption('Chess')
 pygame.font.init()
 main_font = pygame.font.SysFont("comicsans", 30)
 
+sys.dont_write_bytecode = True
 
 resultss = {
     'w': '1-0',
@@ -121,6 +123,7 @@ whites_turn = True
 movesdone = 0
 positions = []
 file = []
+executer = MYSQL(os.path.abspath('C:\Program Files\MySQL\MySQL Server 8.0\bin'), 'localhost', 'root', 'Darsh1210', 'chess')
 
 #Useful lambdas
 right = lambda x: abcs[abcs.index(x[0]) + 1] + x[1]
@@ -128,6 +131,7 @@ left = lambda x: abcs[abcs.index(x[0]) - 1] + x[1]
 up = lambda x: x[0] + str(int(x[1])+1)
 down = lambda x: x[0] + str(int(x[1])-1)
 tomins = lambda x: f"{math.floor(x/60)}:{(f'0{x%60}' if x%60 < 10 else x%60) if x % 60 != 0 else '00'}" if x/3600 < 1 else f"{math.floor(x/3600)}:{math.floor(x/60) - 60 if math.floor(x/60) - 60 >= 10 else f'0{math.floor(x/60)-60}'}:{(f'0{x%60}' if x%60 < 10 else x%60) if x % 60 != 0 else '00'}"
+getword = lambda st, ind: st.split(' ')[ind]
 
 #Board Init
 def board():
@@ -152,44 +156,7 @@ def sqclick(sq, pos):
             return True
         else:
             return False
-
-# Button Class
-class Button:
-    def __init__(self, x, y, text=None, color=None ,textcolor=(0, 0, 0), center = False, autofit= True, *size):
-        self.x, self.y, self.color, self.textcolor = x, y, color, textcolor
-        if text != None: 
-            self.text = text
-            self.font = pygame.font.SysFont("comicsans", 30)
-            self.textlabel = self.font.render(self.text, 1, self.textcolor)
-            if not autofit: self.width, self.height = size
-            else: self.width, self.height = self.textlabel.get_size()
-            if center:
-                self.x = WID/2 - self.width/2
-                self.y = HEI/2 - self.height/2
-
-    def draw(self):
-        self.textlabel = self.font.render(self.text, 1, self.textcolor)
-        x = self.x + self.width/2 - self.textlabel.get_size()[0]/2
-        y = self.y + self.height/2 - self.textlabel.get_size()[1]/2
-
-        pygame.draw.rect(WIN, self.color, (self.x, self.y, self.width, self.height))
-        WIN.blit(self.textlabel, (x , y))
         
-    def click(self, pos):
-        x1 = pos[0]
-        y1 = pos[1]
-        if self.x <= x1 <= self.x + self.width and self.y <= y1 < self.y + self.height:
-            return True
-        else:
-            return False
-
-#Current pieces on board
-pieces = []
-wpieces = []
-bpieces = []
-bking = None
-wking = None
-
 #Checks if any given square is occupied
 def square_occupied(sq, isBlack =None, returnpiece=False):
     if isBlack == None:
@@ -648,6 +615,9 @@ def get_position():
 
 #Checks for a draw
 def checkdraw():
+    if whitewantsdraw and blackwantsdraw:
+        return True, "Agreement"
+    
     if len(pieces) <= 4:
         if len(pieces) == 2: return True, 'Insufficient Material'
 
@@ -732,9 +702,9 @@ def setlegalmoves(sidechecked):
             
     if legalmoves == []:
         if not checkedking.in_check:
-            result('STALEMATE')
+            menu('STALEMATE')
         else:
-            result(otherside.upper()+ ' WINS BY CHECKMATE')        
+            menu(otherside.upper()+ ' WINS BY CHECKMATE')        
     for pi in checkedsidepieces:
         pi.moves = set([])
     for m in legalmoves:
@@ -779,14 +749,16 @@ def notationhelp():
     
 #Checks if move has been made and moves the chosen piece
 def checkmove(pos):
-    global clicked_on_piece, whites_turn, piece_taken, pawnpushed, last_move, movesdone
+    global clicked_on_piece, whites_turn, piece_taken, pawnpushed, last_move, movesdone, promoted
+    passtonotation = ''
 
     def movechange():
-        global whites_turn, clicked_on_piece, pawnpushed, movesdone
+        global whites_turn, clicked_on_piece, pawnpushed, movesdone, whitewantsdraw, blackwantsdraw
         whites_turn = not whites_turn
         clicked_on_piece = None
         pawnpushed += 0.5
         movesdone += 0.5
+        whitewantsdraw, blackwantsdraw = False, False
         for p in pieces:
             p.check_moves()
         positions.append(get_position())
@@ -948,16 +920,37 @@ def notation(**kwargs):
     
 # Main game loop
 def main():
-    global wpieces, wtime, bpieces, wking, pieces, wpieces, bpieces, bking, run, wkrook, wqrook, bkrook, bqrook, last_move, draw
+    global wpieces, wtime, bpieces, wking, pieces,  movesdone, wpieces, bpieces
+    global clicked_on_piece, whites_turn, draw, bking, run, wkrook, wqrook
+    global blackwantsdraw, bkrook, bqrook, last_move, draw, blackwantsdraw, piece_taken
+    global whitewantsdraw, whitewantsdraw, pawnpushed, file, promoted, positions
     run = True
     clock = pygame.time.Clock()
-    resignblack = Button(450, 50, "Resign", (0, 0, 0),(255, 255, 255), False, False, 150, 40)
-    resignwhite = Button(450, 250, "Resign", (255, 255, 255), (0, 0, 0), False, False, 150, 40)
+    resignblack = Button(WIN, 450, 50, "Resign", (0, 0, 0),(255, 255, 255), autofit= False, size = (100, 40))
+    resignwhite = Button(WIN, 450, 250, "Resign", (255, 255, 255), autofit= False, size = (100, 40))
+    drawwhite = Button(WIN, 575, 50, "Draw", (125, 125, 125), autofit=False, size = (100, 40))
+    drawblack = Button(WIN, 575, 250, "Draw", (125, 125, 125), (255, 255, 255), autofit= False, size = (100, 40))
 
+    whites_turn = True
+    movesdone = 0
     last_move = None
+    whitewantsdraw = False
+    blackwantsdraw = False
+    clicked_on_piece = None
+    pawnpushed = 0
+    piece_taken = 0
+    whites_turn = True
+    movesdone = 0
+    promoted = (False, None)
+    positions = []
+    file = []
 
-    wtime = 3770
-    btime = 234
+
+    wtime = 300
+    btime = 300
+
+    wpoints = 0
+    bpoints = 0
 
     wking = king('e1', 0)
     bking = king('e8', 1)
@@ -967,51 +960,60 @@ def main():
     bqrook = rook('a8',1)
 
     pieces = [
-    pawn('a7', 1),
-    pawn('b7', 1),
-    pawn('c7', 1),
-    pawn('d7', 1),
-    pawn('e7', 1),
-    pawn('f7', 1),
-    pawn('g7', 1),
-    pawn('h7', 1),
+    # pawn('a7', 1),
+    # pawn('b7', 1),
+    # pawn('c7', 1),
+    # pawn('d7', 1),
+    # pawn('e7', 1),
+    # pawn('f7', 1),
+    # pawn('g7', 1),
+    # pawn('h7', 1),
 
-    pawn('a2', 0),
-    pawn('b2', 0),
-    pawn('c2', 0),
-    pawn('d2', 0),
-    pawn('e2', 0),
-    pawn('f2', 0),
-    pawn('g2', 0),
-    pawn('h2', 0),
+    # pawn('a2', 0),
+    # pawn('b2', 0),
+    # pawn('c2', 0),
+    # pawn('d2', 0),
+    # pawn('e2', 0),
+    # pawn('f2', 0),
+    # pawn('g2', 0),
+    # pawn('h2', 0),
 
-    bqrook,
-    bkrook,
+    # bqrook,
+    # bkrook,
 
-    wqrook,
-    wkrook,
+    # wqrook,
+    # wkrook,
 
-    knight('b8', 1),
-    knight('g8', 1),
-    knight('b1', 0),
-    knight('g1', 0),
+    # knight('b8', 1),
+    # knight('g8', 1),
+    # knight('b1', 0),
+    # knight('g1', 0),
 
     bishop('c8', 1),
-    bishop('f8', 1),
-    bishop('c1', 0),
+    bishop('g4', 1),
+    bishop('e6', 1),
     bishop('f1', 0),
 
-    queen('d8',  1),
-    queen('d1', 0),
-    wking,
-    bking,
+    # queen('d8',  1),
+    # queen('d1', 0),
+    # wking,
+    # bking,
     ]
 
     wpieces = [x for x in pieces if not x.isBlack]
     bpieces = [x for x in pieces if x.isBlack]
+    for p in wpieces:
+        if type(p) is king:
+            continue
+        wpoints += p.worth
+    for p in bpieces:
+        if type(p) is king:
+            continue
+        bpoints += p.worth
+
 
     def redraw():
-        global clicked_on_piece, whites_turn, draw
+        global clicked_on_piece, whites_turn, draw, whitewantsdraw, blackwantsdraw
         
         #Board Initialization
         board()
@@ -1025,10 +1027,13 @@ def main():
             piec.draw()
             piec.check_moves()
             
+
+        drawblack.color = (125, 125, 125)
+        drawwhite.color = (125, 125, 125)
         checkforchecks()
         draw = checkdraw()
         if draw[0]:
-            result('DRAW BY ' + draw[1].upper())
+            menu('DRAW BY ' + draw[1].upper())
         if whites_turn:
             setlegalmoves('white')
         else:
@@ -1051,10 +1056,15 @@ def main():
             else:
                 resignblack.text = "Resign"
                 resignwhite.text = "Resign"
-        
+        if whitewantsdraw:
+            drawwhite.color = (255, 255, 0)
+        if blackwantsdraw:
+            drawblack.color = (255, 255, 0)
 
         resignblack.draw()
         resignwhite.draw()
+        drawblack.draw()
+        drawwhite.draw()
  
         #Event Checking
         pos = pygame.mouse.get_pos()
@@ -1071,61 +1081,113 @@ def main():
                         checkmove(pos)
                     if resignblack.click(pos):
                         if resignblack.text == "Resign":
-                            result('White wins by resignation')
+                            menu('White wins by resignation')
                         else:
-                            result('Game Aborted')
+                            menu('Game Aborted')
                     if resignwhite.click(pos):
                         if resignwhite.text == "Resign":
-                            result('Black wins by resignation')
+                            menu('Black wins by resignation')
                         else:
-                            result('Game Aborted')                
+                            menu('Game Aborted')  
+                    if drawwhite.click(pos):
+                        whitewantsdraw = True
+                    if drawblack.click(pos):
+                        blackwantsdraw = True
+                                      
     while run:
         clock.tick(60)
         if whites_turn:
             wtime -= 1/76
             if wtime <= 0:
                 if is_sufficient('black'):
-                    result('BLACK WINS ON TIME')
+                    menu('BLACK WINS ON TIME')
                 else:
                     draw = (True, "")
-                    result('TIMEOUT VS IN. MATERIAL')
+                    menu('TIMEOUT VS IN. MATERIAL')
 
         else:
             btime -= 1/76
             if btime <= 0:
                 if is_sufficient('white'):
-                    result('WHITE WINS ON TIME')
+                    menu('WHITE WINS ON TIME')
                 else:
                     draw = (True, "")
-                    result('IN. MATERIAL VS TIMEOUT')
+                    menu('IN. MATERIAL VS TIMEOUT')
 
         redraw()
         wpieces = [x for x in pieces if not x.isBlack]
         bpieces = [x for x in pieces if x.isBlack]
             
         pygame.display.update()
-    
-def result(res):
+
+def menu(res, start=False):
     global run, file
 
-    while True:
-        message = Button(225, 175, res, (255, 255, 255), 100, 50)
-        message.draw()
+    run = False
+    res = res.upper()
+    result = ""
+    if not start:
+        export = Button(WIN, 1, 2, "Export", (47, 60, 126), (251, 234, 235), autofit=True)
+        export.x, export.y = WID - export.width - 2, HEI - export.height - 2
+    else:
+        board()
+        res = "WELCOME"
         
+    message = Button(WIN,225, 20, res, fontsize=15)
+    new = Button(WIN, 1, 100, "New Game", (249, 97, 103), (255, 255, 255 ))
 
-        run = False
+    message.x = 550 - (message.width/2)
+    new.x = 550 - (new.width/2)
+
+
+    
+    if res.count('WHITE') == 1:
+        result = resultss['w']
+    elif res.count('BLACK') == 1:
+        result = resultss['b']
+    elif res.count('DRAW') == 1:
+        result = resultss['d']
+
+
+    if res.count('CHECKMATE') == 1:
+        if file[-1][-1] != "+":
+            file[-1] = file[-1] + "#"
+        else:
+            file[-1] = file[-1][:-1] + "#"
+    
+    l = 0
+    for _ in file:
+        if l % 2 == 0:
+            file[l] = str(int(l/2) + 1) + '. ' + _
+        l += 1
+
+    while True:
+        WIN.blit(BG2, (400, 0))
+        if not start:
+            export.draw()
+        message.draw()
+        new.draw()
+
 
         for event in pygame.event.get():
-                if event.type==pygame.QUIT:
-                    f1 = open('game.txt', 'w+')
-                    for n in file:
-                        f1.write(' ' + n )
-                    if res.split()[-1] == "CHECKMATE":
-                        f1.write('#')
-                    elif draw[0]:
-                        f1.write('=')
-                    pygame.quit()
-                    sys.exit() 
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                sys.exit() 
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if not start:
+                    if export.click(pygame.mouse.get_pos()):
+                        path = os.path.join('C:\\Users\\darsh\\Downloads', 'game.pgn')
+                        with open('game.txt', 'w')as f:
+                            f.writelines([f'[Won By "{getword(res, -1).capitalize()}"]\n', '[White ""]\n', '[Black ""]\n', f'[Result "{result}"]\n'])
+                            for x in file:
+                                f.write(x + ' ')
+                            f.write('\n' + result)
+                if new.click(pygame.mouse.get_pos()):
+                    main()
+                
+                        
         pygame.display.update()
 
-main()
+
+menu("", True)
