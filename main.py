@@ -966,44 +966,44 @@ def main():
     bqrook = rook('a8',1)
 
     pieces = [
-    # pawn('a7', 1),
-    # pawn('b7', 1),
-    # pawn('c7', 1),
-    # pawn('d7', 1),
-    # pawn('e7', 1),
-    # pawn('f7', 1),
-    # pawn('g7', 1),
-    # pawn('h7', 1),
+    pawn('a7', 1),
+    pawn('b7', 1),
+    pawn('c7', 1),
+    pawn('d7', 1),
+    pawn('e7', 1),
+    pawn('f7', 1),
+    pawn('g7', 1),
+    pawn('h7', 1),
 
-    # pawn('a2', 0),
-    # pawn('b2', 0),
-    # pawn('c2', 0),
-    # pawn('d2', 0),
-    # pawn('e2', 0),
-    # pawn('f2', 0),
-    # pawn('g2', 0),
-    # pawn('h2', 0),
+    pawn('a2', 0),
+    pawn('b2', 0),
+    pawn('c2', 0),
+    pawn('d2', 0),
+    pawn('e2', 0),
+    pawn('f2', 0),
+    pawn('g2', 0),
+    pawn('h2', 0),
 
-    # bqrook,
-    # bkrook,
+    bqrook,
+    bkrook,
 
-    # wqrook,
-    # wkrook,
+    wqrook,
+    wkrook,
 
-    # knight('b8', 1),
-    # knight('g8', 1),
-    # knight('b1', 0),
-    # knight('g1', 0),
+    knight('b8', 1),
+    knight('g8', 1),
+    knight('b1', 0),
+    knight('g1', 0),
 
     bishop('c8', 1),
-    bishop('g4', 1),
-    bishop('e6', 1),
+    bishop('f8', 1),
+    bishop('c1', 0),
     bishop('f1', 0),
 
-    # queen('d8',  1),
-    # queen('d1', 0),
-    # wking,
-    # bking,
+    queen('d8',  1),
+    queen('d1', 0),
+    wking,
+    bking,
     ]
 
     wpieces = [x for x in pieces if not x.isBlack]
@@ -1126,7 +1126,7 @@ def main():
             
         pygame.display.update()
 
-def menu(res, start=False):
+def menu(res, start=False, loggedin = False):
     global run, file
 
     run = False
@@ -1142,11 +1142,17 @@ def menu(res, start=False):
     message = Button(WIN,225, 20, res, fontsize=15)
     new = Button(WIN, 1, 100, "New Game", (249, 97, 103), (255, 255, 255 ))
 
+    if not loggedin:
+        logins = Button(WIN, 1, 200, "Login", (249, 97, 103), (255, 255, 255 ))
+        logins.x = 550 - (logins.width/2)
+    else:
+        label1 = pygame.font.SysFont("calibri", 20).render(nm + f'({rating})', 1, (0, 0, 0))
+
+
     message.x = 550 - (message.width/2)
     new.x = 550 - (new.width/2)
-
-
     
+
     if res.count('WHITE') == 1:
         result = resultss['w']
     elif res.count('BLACK') == 1:
@@ -1169,10 +1175,13 @@ def menu(res, start=False):
 
     while True:
         WIN.blit(BG2, (400, 0))
-        if not start:
-            export.draw()
+        if not start: export.draw()
         message.draw()
         new.draw()
+        if not loggedin: logins.draw()
+        else: 
+            WIN.blit(label1, (420, HEI - 30))
+
 
 
         for event in pygame.event.get():
@@ -1191,9 +1200,84 @@ def menu(res, start=False):
                             f.write('\n' + result)
                 if new.click(pygame.mouse.get_pos()):
                     main()
+                if not loggedin:
+                    if logins.click(pygame.mouse.get_pos()):
+                        login()
                 
                         
         pygame.display.update()
 
+def login(createmenu = False):
+    global nm, rating
+    drawmes = False
+    user = InputBox(300, 125, 200, 30)
+    password = InputBox(300, 225, 200, 30, True)
+    if not createmenu:
+        create = Button(WIN, WID - 150, 0, "Create Account", (44, 151, 75),autofit=False, size = (150, 35))
+
+    mes = Button(WIN, 1, 2, '', (255, 127, 127), center=True, screensize = (WID, HEI), autofit=False, size = (500, 50))
+    mes.y -= 10
+    submit = Button(WIN, 300, 300, "Login", (255, 255, 0), autofit=False, size = (100, 30))
+    back = Button(WIN, 0, HEI - 30, "<", (255, 255, 0), autofit=False, size = (30, 30))
+    label1  = pygame.font.SysFont("gotham", 32).render("Username:", 1, (0, 0, 0))
+    label2  = pygame.font.SysFont("gotham", 32).render("Password:", 1, (0, 0, 0))
+    while True:
+        WIN.blit(BG, (0, 0))
+        WIN.blit(label1, (175, 130))
+        WIN.blit(label2, (175, 230))
+
+        if drawmes:
+            mes.draw()
+        submit.draw()
+        user.update()
+        user.draw(WIN)
+        if not createmenu: create.draw()
+        else: submit.text = "Create"
+        password.update()
+        password.draw(WIN)
+        back.draw()
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                sys.exit() 
+            user.handle_event(event)
+            password.handle_event(event)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if submit.click(pygame.mouse.get_pos()):
+                    if not createmenu:
+                        res = executer.select('users', 'username', user.get(), 'password',password.get(), 'AND')
+                        if res[0] == 'No results':
+                            mes.text = "Wrong Username or password"
+                            drawmes = True
+                        elif type(res) is list:
+                            print(executer.selectall('users'))
+                            nm, rating = res[0][0], res[0][2]
+                            menu("", start = True,loggedin=True)
+                    else:
+                        if user.get() != '' and password.get() != '':
+                            if len(user.get()) <= 8:
+                                res = executer.insert('users', ('username', 'password'), (user.get(), password.get()))
+                                if res != None:
+                                    if "Duplicate" in res:
+                                        mes.text = "Username already taken"
+                                        drawmes = True
+                                else:
+                                    nm = user.get()
+                                    rating = 1200
+                                    menu('', start=True, loggedin=True)
+
+                            else:
+                                mes.text = "Username must be at max 8 characters"
+                                drawmes = True
+                        else:
+                            mes.text = "Enter username and password"
+                            drawmes = True
+                if not createmenu:
+                    if create.click(pygame.mouse.get_pos()):
+                        login(True)
+                if back.click(pygame.mouse.get_pos()):
+                    menu("", True)
 
 menu("", True)

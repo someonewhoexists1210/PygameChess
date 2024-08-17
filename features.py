@@ -165,15 +165,14 @@ class MYSQL:
             return "Error", e
     
     def insert(self, table, column, values):
-        if table != 'skins':
-            try:
-                command = f"INSERT into {table}({column[0]},{column[1]},{column[2]}) VALUES ('{values[0]}','{values[1]}',{values[2]})"
-                self.mycursor.execute(command)
-                self.mydb.commit()
+        try:
+            command = f"INSERT into {table}({column[0]},{column[1]}) VALUES ('{values[0]}','{values[1]}')"
+            self.mycursor.execute(command)
+            self.mydb.commit()
 
                 
-            except mysql.connector.errors.Error as e:
-                print(e)
+        except mysql.connector.errors.Error as e:
+            return str(e)
         
     
     def update(self, table, columns, values):
