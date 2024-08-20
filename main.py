@@ -943,11 +943,6 @@ def notation(**kwargs):
     if last_move == None: return
 
     x = last_move[1]
-    
-    if type(x) is tuple:
-        x = "x" + x[0]
-    
-
 
     if type(last_move[0]) is knight:
         x = 'N' + kwargs['additional'] + x
@@ -963,15 +958,88 @@ def notation(**kwargs):
     if bking.in_check or wking.in_check:
         x = x + '+'
     
-
     file.append(x)
     
+#Checks if notation need to be like Nbd2
+def notationhelp():
+    x = []
+    y = []
+    locs = []
+    
+    for p in pieces:
+        for mv in p.moves:
+            x.append((mv, type(p), p.isBlack))
+            y.append(p.square)
+            
+    if tuple([last_move[1], type(last_move[0]), last_move[0].isBlack]) in x:
+        for _ in range(len(x)):
+            if x[_] == tuple([last_move[1], type(last_move[0]), last_move[0].isBlack]):
+                locs.append(y[_])
+           
+        if last_move[2] in locs:
+            if len(locs) == 2:
+                if locs[0][0] == locs[1][0]:
+                    return last_move[2][1]
+                else:
+                    return last_move[2][0]
+            if len(locs) >= 3:
+                toreturn = '  '
+                for _ in locs:
+                    if _ == last_move[2]:
+                        continue
+                    if _[1] == last_move[2][1]:
+                        toreturn = last_move[2][0] + toreturn if toreturn[0] != last_move[2][0] else toreturn
+                    if _[0] == last_move[2][0]:
+                        toreturn = toreturn + last_move[2][1] if toreturn[-1] != last_move[2][1] else toreturn
+                return toreturn.replace(" ", '')
+            
+    return ''
+
+  
+def notationtomove(move):
+    move = str(move)
+    pis = {
+        'K': king,
+        'N': knight,
+        'B': bishop,
+        'R': rook,
+        'Q': queen,
+
+
+    }
+    move.removesuffix('+')
+    move.removesuffix('#')
+
+    length = len(move)
+    if length == 2:
+        for x in pieces:
+            if type(x) is pawn and move in x.moves:
+                x.move(move)
+
+    elif length == 3:
+        pt = pis[move[0]]
+        for x in pieces:
+            if type(x) == pt and move in x.moves:
+                x.move(move)
+
+    if length == 4:
+        if move[0].islower():
+            for x in pieces:
+                if type(x) is pawn and x.square[0] == move[0] and move[1:] in x.moves:
+                    x.move(move[1:])
+
+        else:
+            pt = pis[move[0]]
+            for x in pieces:
+                if type(x) is pt and move[1:] in x.moves:
+                    x.move(move[1:])
+                      
 # Main game loop
-def main():
-    global wpieces, wtime, bpieces, wking, pieces,  movesdone, wpieces, bpieces
-    global clicked_on_piece, whites_turn, draw, bking, run, wkrook, wqrook
-    global blackwantsdraw, bkrook, bqrook, last_move, draw, blackwantsdraw, piece_taken
-    global whitewantsdraw, whitewantsdraw, pawnpushed, file, promoted, positions
+def main(notation = False):
+    global wpieces, bpieces, pieces, bking, wking, wkrook, wqrook, bkrook, bqrook
+    global clicked_on_piece, whites_turn, movesdone, last_move
+    global whitewantsdraw, blackwantsdraw, promoted
+    global file, positions, run, pawnpushed, piece_taken
     run = True
     clock = pygame.time.Clock()
     resignblack = Button(WIN, 450, 50, "Resign", (0, 0, 0),(255, 255, 255), autofit= False, size = (100, 40))
@@ -980,7 +1048,6 @@ def main():
     drawblack = Button(WIN, 575, 250, "Draw", (125, 125, 125), (255, 255, 255), autofit= False, size = (100, 40))
 
     whites_turn = True
-    movesdone = 0
     last_move = None
     whitewantsdraw = False
     blackwantsdraw = False
@@ -996,9 +1063,6 @@ def main():
 
     wtime = 300
     btime = 300
-
-    wpoints = 0
-    bpoints = 0
 
     wking = king('e1', 0)
     bking = king('e8', 1)
@@ -1048,20 +1112,14 @@ def main():
     bking,
     ]
 
+    for p in pieces:
+        p.check_moves()
     wpieces = [x for x in pieces if not x.isBlack]
     bpieces = [x for x in pieces if x.isBlack]
-    for p in wpieces:
-        if type(p) is king:
-            continue
-        wpoints += p.worth
-    for p in bpieces:
-        if type(p) is king:
-            continue
-        bpoints += p.worth
-
 
     def redraw():
-        global clicked_on_piece, whites_turn, draw, whitewantsdraw, blackwantsdraw
+        global clicked_on_piece, whites_turn, whitewantsdraw, blackwantsdraw
+        nonlocal draw
         
         #Board Initialization
         board()
@@ -1126,7 +1184,7 @@ def main():
                             if whites_turn != x.isBlack:
                                 clicked_on_piece = x
                     if clicked_on_piece != None:
-                        checkmove(pos)
+                        checkmove(clicked_on_piece, pos)
                     if resignblack.click(pos):
                         if resignblack.text == "Resign":
                             menu('White wins by resignation')
@@ -1141,9 +1199,11 @@ def main():
                         whitewantsdraw = True
                     if drawblack.click(pos):
                         blackwantsdraw = True
-                                      
+
+
     while run:
         clock.tick(60)
+        
         if whites_turn:
             wtime -= 1/76
             if wtime <= 0:
@@ -1168,6 +1228,7 @@ def main():
             
         pygame.display.update()
 
+#Menu screen
 def menu(res, start=False, loggedin = False):
     global run, file
 
@@ -1237,7 +1298,7 @@ def menu(res, start=False, loggedin = False):
                 if not start:
                     if export.click(pygame.mouse.get_pos()):
                         path = os.path.join('C:\\Users\\darsh\\Downloads', 'game.pgn')
-                        with open('game.txt', 'w')as f:
+                        with open(path, 'w')as f:
                             f.writelines([f'[Won By "{getword(res, -1).capitalize()}"]\n', '[White ""]\n', '[Black ""]\n', f'[Result "{result}"]\n'])
                             for x in file:
                                 f.write(x + ' ')
@@ -1251,6 +1312,7 @@ def menu(res, start=False, loggedin = False):
                         
         pygame.display.update()
 
+#Login Screen
 def login(createmenu = False):
     global nm, rating
     drawmes = False
