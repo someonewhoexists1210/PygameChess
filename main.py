@@ -155,6 +155,79 @@ def board():
                     else:
                         pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
 
+#Flips board
+def flip(whitedown):
+    if whitedown:
+        for x in boardpositions:
+            if x[0] == 'a':
+                boardpositions[x] = (0, boardpositions[x][1])
+            elif x[0] == 'b':
+                boardpositions[x] = (50, boardpositions[x][1])
+            elif x[0] == 'c':
+                boardpositions[x] = (100, boardpositions[x][1])
+            elif x[0] == 'd':
+                boardpositions[x] = (150, boardpositions[x][1])
+            elif x[0] == 'e':
+                boardpositions[x] = (200, boardpositions[x][1])
+            elif x[0] == 'f':
+                boardpositions[x] = (250, boardpositions[x][1])
+            elif x[0] == 'g':
+                boardpositions[x] = (300, boardpositions[x][1])
+            else:
+                boardpositions[x] = (350, boardpositions[x][1])
+            
+            if x[1] == '8':
+                boardpositions[x] = (boardpositions[x][0], 0)
+            elif x[1] == '7':
+                boardpositions[x] = (boardpositions[x][0], 50)
+            elif x[1] == '6':
+                boardpositions[x] = (boardpositions[x][0], 100)
+            elif x[1] == '5':
+                boardpositions[x] = (boardpositions[x][0], 150)
+            elif x[1] == '4':
+                boardpositions[x] = (boardpositions[x][0], 200)
+            elif x[1] == '3':
+                boardpositions[x] = (boardpositions[x][0], 250)
+            elif x[1] == '2':
+                boardpositions[x] = (boardpositions[x][0], 300)
+            else:
+                boardpositions[x] = (boardpositions[x][0], 350)
+    else:
+        for x in boardpositions:
+            if x[0] == 'h':
+                boardpositions[x] = ( 0, boardpositions[x][1])
+            elif x[0] == 'g':
+                boardpositions[x] = (50, boardpositions[x][1])
+            elif x[0] == 'f':
+                boardpositions[x] = (100, boardpositions[x][1])
+            elif x[0] == 'e':
+                boardpositions[x] = (150, boardpositions[x][1])
+            elif x[0] == 'd':
+                boardpositions[x] = (200, boardpositions[x][1])
+            elif x[0] == 'c':
+                boardpositions[x] = (250, boardpositions[x][1])
+            elif x[0] == 'b':
+                boardpositions[x] = (300, boardpositions[x][1])
+            else:
+                boardpositions[x] = (350, boardpositions[x][1])
+            
+            if x[1] == '1':
+                boardpositions[x] = (boardpositions[x][0], 0)
+            elif x[1] == '2':
+                boardpositions[x] = (boardpositions[x][0], 50)
+            elif x[1] == '3':
+                boardpositions[x] = (boardpositions[x][0], 100)
+            elif x[1] == '4':
+                boardpositions[x] = (boardpositions[x][0], 150)
+            elif x[1] == '5':
+                boardpositions[x] = (boardpositions[x][0], 200)
+            elif x[1] == '6':
+                boardpositions[x] = (boardpositions[x][0], 250)
+            elif x[1] == '7':
+                boardpositions[x] = (boardpositions[x][0], 300)
+            else:
+                boardpositions[x] = (boardpositions[x][0], 350)
+
 #Check if square clicked
 def sqclick(sq, pos):
         x1, y1 = pos
@@ -171,6 +244,8 @@ def square_occupied(sq, isBlack =None, returnpiece=False):
                 if returnpiece:
                     return l
                 return True
+        if returnpiece:
+            return None
         return False
     else:
         for l in pieces:
@@ -179,6 +254,8 @@ def square_occupied(sq, isBlack =None, returnpiece=False):
                     if returnpiece:
                         return l
                     return True
+        if returnpiece:
+            return None
         return False
     
 #Checks Diagonals
@@ -189,24 +266,24 @@ def diagonal(sq, piece=None):
             if sq[0] !='a':
                 sq1 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])-1)
                 if square_occupied(sq1, False):
-                    result.append((sq1, ''))
+                    result.append('x' + sq1)
 
             if sq[0] != 'h':
                 sq2 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])-1)
                 if square_occupied(sq2, False):
-                    result.append((sq2, ''))
+                    result.append('x' + sq2)
             return result
         
         else:
             if sq[0] !='a':
                 sq1 = abcs[abcs.index(sq[0]) - 1]+str(int(sq[1])+1)
                 if square_occupied(sq1, True):
-                    result.append((sq1, ''))
+                    result.append('x' + sq1)
 
             if sq[0] != 'h':
                 sq2 = abcs[abcs.index(sq[0]) + 1]+str(int(sq[1])+1)
                 if square_occupied(sq2, True):
-                    result.append((sq2, ''))
+                    result.append('x' + sq2)
             return result
             
     #Checks kings diagonal reaches
@@ -227,11 +304,11 @@ def diagonal(sq, piece=None):
     while tempsq[0] != 'h' and tempsq[1] != '8':
         tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])+1)
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                tr.append((tempsq, ''))
+                tr.append('x' + tempsq)
                 break
         tr.append(tempsq)
             
@@ -242,11 +319,11 @@ def diagonal(sq, piece=None):
     while tempsq[0] != 'a' and tempsq[1] != '1':
         tempsq = abcs[abcs.index(tempsq[0]) - 1]+str(int(tempsq[1])-1)
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                bl.append((tempsq, ''))
+                bl.append('x' + tempsq)
                 break
         bl.append(tempsq)
 
@@ -256,11 +333,11 @@ def diagonal(sq, piece=None):
     while tempsq[0] != 'a' and tempsq[1] != '8':
         tempsq = abcs[abcs.index(tempsq[0]) - 1]+str(int(tempsq[1])+1)
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                tr.append((tempsq, ''))
+                tr.append('x' + tempsq)
                 break
         tr.append(tempsq)
 
@@ -269,11 +346,11 @@ def diagonal(sq, piece=None):
     while tempsq[0] != 'h' and tempsq[1] != '1':
         tempsq = abcs[abcs.index(tempsq[0]) + 1]+str(int(tempsq[1])-1)
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                tr.append((tempsq, ''))
+                tr.append('x' + tempsq)
                 break
         tr.append(tempsq)
 
@@ -291,11 +368,11 @@ def straight(sq, piece):
     while tempsq[1] != '8':
         tempsq = tempsq[0] + str((int(tempsq[1])+1))
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                t.append((tempsq, ''))
+                t.append('x' + tempsq)
                 break
         t.append(tempsq)
     
@@ -304,11 +381,11 @@ def straight(sq, piece):
     while tempsq[1] != '1':
         tempsq = tempsq[0] + str((int(tempsq[1])-1))
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                b.append((tempsq, ''))
+                b.append('x' + tempsq)
                 break
         b.append(tempsq)
 
@@ -317,12 +394,11 @@ def straight(sq, piece):
     while tempsq[0] != 'h':
         tempsq = abcs[abcs.index(tempsq[0])+1] + tempsq[1]
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                r.append((tempsq, ''))
-
+                r.append('x' + tempsq)
                 break
         r.append(tempsq)
 
@@ -331,11 +407,11 @@ def straight(sq, piece):
     while tempsq[0] != 'a':
         tempsq = abcs[abcs.index(tempsq[0])-1] + tempsq[1]
         occupied = square_occupied(tempsq, returnpiece=True)
-        if occupied != False:
+        if occupied != None:
             if piece.isBlack == occupied.isBlack:
                 break
             else:
-                l.append((tempsq, ''))
+                l.append('x' + tempsq)
                 break
         l.append(tempsq)
     
@@ -345,7 +421,6 @@ def straight(sq, piece):
 class piece:
     def __init__(self, square, isBlack, worth):
         self.square = square
-        self.x, self.y = boardpositions[self.square]
         self.moves = set([])
         self.isBlack = isBlack
         self.img = IMGS[self.__class__.__name__][self.isBlack]
@@ -356,14 +431,14 @@ class piece:
         }
 
     def draw(self):
-        WIN.blit(self.img, (self.x, self.y))
+        WIN.blit(self.img, (boardpositions[self.square][0], boardpositions[self.square][1]))
 
     def draw_moves(self):
         for x in self.moves:
             #If its a capture draw something else
-            if type(x) is tuple:
-                pygame.draw.rect(WIN, (125,125,125), (boardpositions[x[0]][0] + 5, boardpositions[x[0]][1] + 5 , 40, 40))
-                pygame.draw.rect(WIN, (255,255,255), (boardpositions[x[0]][0] + 10, boardpositions[x[0]][1] + 10 , 30, 30))
+            if x[0] == 'x':
+                pygame.draw.rect(WIN, (125,125,125), (boardpositions[x[1:3]][0] + 5, boardpositions[x[1:3]][1] + 5 , 40, 40))
+                pygame.draw.rect(WIN, (255,255,255), (boardpositions[x[1:3]][0] + 10, boardpositions[x[1:3]][1] + 10 , 30, 30))
 
             else:
                 #For castleing moves
@@ -376,8 +451,8 @@ class piece:
     def remove_moves(self):
         toremove = []
         for l in self.moves:
-            if type(l) is tuple:
-                if l[0] not in boardpositions:
+            if l[0] == 'x':
+                if l[1:3] not in boardpositions:
                     toremove.append(l)
             elif l not in boardpositions:
                 toremove.append(l)
@@ -392,28 +467,51 @@ class piece:
     def click(self, pos):
         x1 = pos[0]
         y1 = pos[1]
-        if self.x <= x1 <= self.x + 50 and self.y <= y1 < self.y + 50:
+        if boardpositions[self.square][0] <= x1 <= boardpositions[self.square][0] + 50 and boardpositions[self.square][1] <= y1 < boardpositions[self.square][1] + 50:
             return True
         else:
             return False
 
-    def check_moves(self):
-        pass
-
     #Capture piece
     def capture(self, capturedpiece):
         pieces.remove(capturedpiece)
-        self.move(capturedpiece.square)
+        self.square = capturedpiece.square
         
     #Move function
     def move(self, sq, cp=None):
-        if type(sq) == tuple:
-            self.capture(cp)
-            return
-        self.square = sq
-        self.x, self.y = boardpositions[self.square]    
-        self.check_moves()
-        
+        global last_move, piece_taken
+        if sq in self.moves:
+            if sq[0] == 'x':
+                last_move = (self, sq, self.square)
+                ptn = notationhelp()
+                
+                
+                cp = square_occupied(sq[1:3],returnpiece=True)
+                piece_taken = 0
+                
+                if type(self) == pawn and cp == None:
+                    passant = True
+                    cp = square_occupied(sq[1] + str(int(sq[2]) + 1), returnpiece=True) if self.isBlack else square_occupied(sq[1] + str(int(sq[2]) - 1), returnpiece=True)
+                else:
+                    passant = False
+
+                self.capture(cp)
+                if passant:
+                    self.square = self.square[0] + str(int(self.square[1]) + (-1 if self.isBlack else 1))
+
+                movechange(ptn)  
+
+
+            else:
+                last_move = (self, sq, self.square)
+                ptn = notationhelp()
+                self.square = sq  
+                piece_taken += 0.5
+                movechange(ptn)
+
+        else:
+            raise ValueError(f'{self.__class__.__name__.capitalize()} {"takes" if sq[0] == "x" else "to"} {sq[1:3] if sq[0] == "x" else sq}')
+
 #Pawn Class
 class pawn(piece):
     def __init__(self, square, isBlack):
@@ -437,27 +535,42 @@ class pawn(piece):
                 if self.square[1] == '2' and not square_occupied(sq2_in_front):
                     mvs.add(sq2_in_front)
         
+        
         diags = diagonal(self.square, self)
         if diags != None:
             for l in diags:
                 mvs.add(l)
+       
         if last_move != None:
             if self.isBlack:
                 if type(last_move[0]) is pawn and last_move[1][1] == '4' and last_move[2][1] == '2':
                     if self.square[1] == '4':
                         if last_move[1][0] == abcs[abcs.index(self.square[0]) + 1]:
-                            mvs.add((abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) - 1), last_move[0]))
+                            mvs.add('x' + abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) - 1))
                             
-                        if last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
-                            mvs.add((abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) - 1), last_move[0]))
+                        elif last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
+                            mvs.add('x' + abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) - 1))
             else:
                 if type(last_move[0]) is pawn and last_move[1][1] == '5' and last_move[2][1] == '7':
                     if self.square[1] == '5':
                         if last_move[1][0] == abcs[abcs.index(self.square[0]) + 1]:
-                            mvs.add((abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) + 1), last_move[0]))
-                        if last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
-                            mvs.add((abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) + 1), last_move[0]))
-                            
+                            mvs.add('x' + abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) + 1))
+                        elif last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
+                            mvs.add('x' + abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) + 1))
+        
+        tor = [[], []]
+        for m in self.moves:
+            if m[1] == '8':
+                tor[0].append(m)
+                tor[1].append(m+'=Q')
+                tor[1].append(m+'=R')
+                tor[1].append(m+'=B')
+                tor[1].append(m+'=K')
+        for _ in tor[0]:
+            self.moves.remove(_)
+        for _ in tor[1]:
+            self.moves.add(_)
+
 
         self.moves = mvs
         self.remove_moves()
@@ -507,15 +620,8 @@ class pawn(piece):
             pieces.remove(self)
 
     def move(self, sq, cp=None):
-        global pawnpushed                
+        global pawnpushed         
         super().move(sq, cp)
-        if type(sq) is tuple:
-            if sq[1] != '':
-                if self.isBlack:
-                    self.square = cp.square[0] + str(int(cp.square[1]) - 1)
-                else:
-                    self.square = cp.square[0] + str(int(cp.square[1]) + 1)
-                self.x, self.y = boardpositions[self.square]   
         pawnpushed = 0
 
 #Rook Class
@@ -565,7 +671,7 @@ class king(piece):
         for mv in self.moves:
             if square_occupied(mv, not self.isBlack):
                 self.moves.remove(mv)
-                self.moves.add((mv, ''))
+                self.moves.add('x' + mv)
         
         self.remove_moves()
         castles(self.isBlack)
@@ -616,7 +722,7 @@ def is_sufficient(color = None):
 def get_position():
     temp = []
     for p in pieces:
-        temp.append(p.square)
+        temp.append((p.square, p))
     return temp
 
 #Checks for a draw
@@ -630,18 +736,18 @@ def checkdraw():
         for p in pieces:
             if type(p) is queen or type(p) is rook or type(p) is pawn:
                 if pawnpushed >= 50 and piece_taken >= 50: return True, '50 move rule'    
-                elif positions.count(get_position()) >= 2: return True, 'Repetition'
+                elif positions.count(get_position()) >= 3: return True, 'Repetition'
                 else: return False, 'Not a draw' 
                     
         else:
             if len(wpieces) <= 2 and len(bpieces) <= 2: return True, 'Insufficient Material'            
-            elif positions.count(get_position()) >= 2: return True, 'Repetition'
+            elif positions.count(get_position()) >= 3: return True, 'Repetition'
             else: return False, 'Not a draw'
 
             
     else:
         if pawnpushed >= 50 and piece_taken >= 50: return True, '50 Move Rule'
-        elif positions.count(get_position()) >= 2: return True, 'Repetition'
+        elif positions.count(get_position()) >= 3: return True, 'Repetition'
         else: return False, 'Not a draw'
       
 #Checks if in check
@@ -652,14 +758,14 @@ def checkforchecks():
     if not whites_turn:
         for p in wpieces:
             for mv in p.moves:
-                if type(mv) is tuple:
+                if mv[0] == 'x':
                     if mv[0] == bking.square:
                         bking.in_check = True
                         
     else:
         for p in bpieces:
             for mv in p.moves:
-                if type(mv) is tuple:
+                if mv[0] == 'x':
                     if mv[0] == wking.square:
                         wking.in_check = True
 
@@ -678,21 +784,20 @@ def setlegalmoves(sidechecked):
         for c in x.moves: 
             orisq = x.square
 
-            if type(c) is tuple:
-                    if c[1] == '':
-                        takenp = square_occupied(c[0], returnpiece=True)
-                    else:
-                        takenp = c[1]
+            if c[0] == 'x':
+                    takenp = square_occupied(c[1:3], returnpiece=True)
+                    if takenp == None and type(x) is pawn:
+                        takenp = square_occupied(c[1] + str(int(c[2]) + 1), returnpiece=True) if x.isBlack else square_occupied(c[1] + str(int(c[2]) - 1), returnpiece=True)
                     pieces.remove(takenp)
                     checkingsidepieces.remove(takenp)
-                    x.square = c[0]
+                    x.square = c[1:3]
 
             else: x.square = c
 
             for piec in checkingsidepieces:
                 piec.check_moves()
                 for m in piec.moves:
-                    if type(m) is tuple and m[0] == checkedking.square:
+                    if m[0] == 'x' and m[1:3] == checkedking.square:
                         break
                 else:
                     continue
@@ -700,7 +805,7 @@ def setlegalmoves(sidechecked):
             else:
                 legalmoves.append((c, x))
                 
-            if type(c) is tuple:
+            if c[0] == 'x':
                 pieces.append(takenp)
                 checkingsidepieces.append(takenp)
                     
@@ -716,127 +821,64 @@ def setlegalmoves(sidechecked):
     for m in legalmoves:
         m[1].moves.add(m[0])
 
-#Checks if notation need to be like Nbd2
-def notationhelp():
-    x = []
-    y = []
-    locs = []
-    
+# Called after every move
+def movechange(passtonotation = ''):
+    global whites_turn, clicked_on_piece, pawnpushed, movesdone, whitewantsdraw, blackwantsdraw, promoted
+    whites_turn = not whites_turn
+    clicked_on_piece = None
+    pawnpushed += 0.5
+    movesdone += 0.5
+    whitewantsdraw, blackwantsdraw = False, False
     for p in pieces:
-        for mv in p.moves:
-            x.append((mv, type(p), p.isBlack))
-            y.append(p.square)
-            
-    if tuple([last_move[1], type(last_move[0]), last_move[0].isBlack]) in x:
-        for _ in range(len(x)):
-            if x[_] == tuple([last_move[1], type(last_move[0]), last_move[0].isBlack]):
-                locs.append(y[_])
-           
-        if last_move[2] in locs:
-            if len(locs) == 2:
-                if locs[0][0] == locs[1][0]:
-                    return last_move[2][1]
-                else:
-                    return last_move[2][0]
-            if len(locs) >= 3:
-                toreturn = '  '
-                for _ in locs:
-                    if _ == last_move[2]:
-                        continue
-                    if _[1] == last_move[2][1]:
-                        toreturn = last_move[2][0] + toreturn if toreturn[0] != last_move[2][0] else toreturn
-                    if _[0] == last_move[2][0]:
-                        toreturn = toreturn + last_move[2][1] if toreturn[-1] != last_move[2][1] else toreturn
-                return toreturn.replace(" ", '')
-            
-        
-    
-    return ''
-    
-#Checks if move has been made and moves the chosen piece
-def checkmove(pos):
-    global clicked_on_piece, whites_turn, piece_taken, pawnpushed, last_move, movesdone, promoted
-    passtonotation = ''
+        p.check_moves()
+    positions.append(get_position())
+    notation(additional = passtonotation)
+    promoted = (False, None)
 
-    def movechange():
-        global whites_turn, clicked_on_piece, pawnpushed, movesdone, whitewantsdraw, blackwantsdraw
-        whites_turn = not whites_turn
-        clicked_on_piece = None
-        pawnpushed += 0.5
-        movesdone += 0.5
-        whitewantsdraw, blackwantsdraw = False, False
-        for p in pieces:
-            p.check_moves()
-        positions.append(get_position())
-        notation(additional = passtonotation)
+#Checks if move has been made and moves the chosen piece
+def checkmove(clicked_on_piece, pos):
+    global last_move
+
+    if clicked_on_piece == wking:
+        if sqclick('g1', pos) and 'g1p' in wking.moves:
+            wking.square = 'g1'
+            wkrook.square = 'f1'
+            last_move = (wking, 'O-O')
+            movechange()
+            return
+
+    if clicked_on_piece == wking:
+        if sqclick('c1', pos) and 'c1p' in wking.moves:
+            wking.move('c1')
+            wqrook.move('d1')
+            last_move = (wking, 'O-O-O')
+            movechange()
+            return
+
+    if clicked_on_piece == wking:
+        if sqclick('g8', pos) and 'g8p' in wking.moves:
+            wking.move('g8')
+            wkrook.move('f8')
+            last_move = (wking, 'O-O')
+            movechange()
+            return
+        
+    if clicked_on_piece == wking:
+        if sqclick('c8', pos) and 'c8p' in wking.moves:
+            wking.move('c8')
+            wkrook.move('d8')
+            last_move = (wking, 'O-O-O')
+            movechange()
+            return
+            
+
 
     for mv in clicked_on_piece.moves:
-        if clicked_on_piece == wking:
-            if mv[-1] == 'p':
-                if mv[0] == 'g':
-                    if sqclick('g1', pos):
-                        promoted = (False, None)
-                        wking.move('g1')
-                        wkrook.move('f1')
-                        last_move = (wking, 'O-O')
-                        movechange()
-                        return
-                    continue
-                elif mv[0] == 'c':
-                    if sqclick('c1', pos):
-                        promoted = (False, None)
-                        wking.move('c1')
-                        wqrook.move('d1')
-                        last_move = (wking, 'O-O-O')
-                        movechange()
-                        return
-                    continue
-
-        elif clicked_on_piece == bking:
-            if mv[-1] == 'p':
-                if mv[0] == 'g':
-                    if sqclick('g8', pos):
-                        promoted = (False, None)
-                        bking.move('g8')
-                        bkrook.move('f8')
-                        last_move = (bking, 'O-O')
-                        movechange()
-                        return
-                    continue
-                elif mv[0] == 'c':
-                    if sqclick('c8', pos):
-                        promoted = (False, None)
-                        bking.move('c8')
-                        bqrook.move('d8')
-                        last_move = (bking, 'O-O-O')
-                        movechange()
-                        return
-                    continue
-
-        if type(mv) is tuple:
-            osq = clicked_on_piece.square
-            if sqclick(mv[0], pos):
-                last_move = (clicked_on_piece, mv, osq)
-                passtonotation = notationhelp()
-                if mv[1] == '':
-                    promoted = (False, None)
-                    clicked_on_piece.move(mv, square_occupied(mv[0],returnpiece=True))
-                else:
-                    promoted = (False, None)
-                    clicked_on_piece.move(mv, mv[1])
-                piece_taken = 0
-                movechange()      
-                return
-        else:
-            if sqclick(mv, pos):
-                osq = clicked_on_piece.square
-                promoted = (False, None)
-                last_move = (clicked_on_piece, mv, osq)
-                passtonotation = notationhelp()
-                clicked_on_piece.move(mv)
-                piece_taken += 0.5
-                movechange()
-                return
+        if mv[-1] == 'p':
+            continue
+        if sqclick(mv[1:3] if mv[0] == 'x' else mv, pos):
+            clicked_on_piece.move(mv)
+            return 
 
 #Checks if either side can castle    
 def castles(color):
@@ -1153,6 +1195,8 @@ def menu(res, start=False, loggedin = False):
     new.x = 550 - (new.width/2)
     
 
+
+    
     if res.count('WHITE') == 1:
         result = resultss['w']
     elif res.count('BLACK') == 1:
