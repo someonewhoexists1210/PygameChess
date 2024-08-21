@@ -441,19 +441,23 @@ class piece:
                 pygame.draw.rect(WIN, (255,255,255), (boardpositions[x[1:3]][0] + 10, boardpositions[x[1:3]][1] + 10 , 30, 30))
 
             else:
-                #For castleing moves
-                if x[-1] == 'p':
-                    pygame.draw.circle(WIN, (125,125,125), (boardpositions[x[:-1]][0] + 25, boardpositions[x[:-1]][1] + 25), 10)
-                else:
-                    pygame.draw.circle(WIN, (125,125,125), (boardpositions[x][0] + 25, boardpositions[x][1] + 25), 10)
+                #For castling moves
+                if x[-1] == 'O':
+                    x = ('g8' if self.isBlack else 'g1') if x == 'O-O' else ('c8' if self.isBlack else 'c1')
+                elif '=' in x:
+                    x = x.split('=')[0]
+                pygame.draw.circle(WIN, (125,125,125), (boardpositions[x][0] + 25, boardpositions[x][1] + 25), 10)
 
     #Remove illegal moves
     def remove_moves(self):
         toremove = []
         for l in self.moves:
+            if '=' in l:
+                l = l.split("=")[0]
             if l[0] == 'x':
                 if l[1:3] not in boardpositions:
                     toremove.append(l)
+
             elif l not in boardpositions:
                 toremove.append(l)
             elif square_occupied(l, self.isBlack):
@@ -545,17 +549,17 @@ class pawn(piece):
                             mvs.add('x' + abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) + 1))
         
         tor = [[], []]
-        for m in self.moves:
-            if m[1] == '8':
+        for m in mvs:
+            if m[-1] == '8' or m[-1] == '1':
                 tor[0].append(m)
                 tor[1].append(m+'=Q')
                 tor[1].append(m+'=R')
                 tor[1].append(m+'=B')
-                tor[1].append(m+'=K')
+                tor[1].append(m+'=N')
         for _ in tor[0]:
-            self.moves.remove(_)
+            mvs.remove(_)
         for _ in tor[1]:
-            self.moves.add(_)
+            mvs.add(_)
 
 
         self.moves = mvs
@@ -975,7 +979,7 @@ def checkcastle(color):
                 result[1] = True
 
     if result[0]:
-        selfking.moves.add(castlesqs[color]['kside'][1] + "p")
+        selfking.moves.add('O-O')
     if result[1]:
         selfking.moves.add('O-O-O')
 
@@ -1079,36 +1083,96 @@ def notationtomove(move):
         'B': bishop,
         'R': rook,
         'Q': queen,
-
-
     }
-    move.removesuffix('+')
-    move.removesuffix('#')
+    if whites_turn:
+        selfpieces = wpieces.copy()
+    else:
+        selfpieces = bpieces.copy()
+
+    move = move.removesuffix('+')
+    move = move.removesuffix('#')
 
     length = len(move)
+    #e4
     if length == 2:
-        for x in pieces:
+        for x in selfpieces:
             if type(x) is pawn and move in x.moves:
                 x.move(move)
+                return
 
+    # Nc3
     elif length == 3:
+        if move == 'O-O':
+            if whites_turn:
+                wking.move(move)
+                return
+            else:
+                bking.move(move)           
+                return 
+                
         pt = pis[move[0]]
-        for x in pieces:
-            if type(x) == pt and move in x.moves:
-                x.move(move)
+        for x in selfpieces:
+            if type(x) == pt and move[1:] in x.moves:
+                x.move(move[1:])
+                return
 
-    if length == 4:
-        if move[0].islower():
-            for x in pieces:
+    #Nge2, Nxe3, exd5, e8=Q
+    elif length == 4:
+        if '=' in move:
+            for x in selfpieces:
+                if type(x) is pawn and move in x.moves:
+                    x.move(move, definitepromote=True)
+                    return
+
+        elif move[0].islower():
+            for x in selfpieces:
                 if type(x) is pawn and x.square[0] == move[0] and move[1:] in x.moves:
                     x.move(move[1:])
+                    return
 
         else:
             pt = pis[move[0]]
-            for x in pieces:
-                if type(x) is pt and move[1:] in x.moves:
-                    x.move(move[1:])
-                      
+            if move[1] == 'x':
+                for x in selfpieces:
+                    if type(x) is pt and move[1:] in x.moves:
+                        x.move(move[1:])
+                        return
+            else:
+                for x in selfpieces:
+                    if type(x) is pt and move[2:] in x.moves and move[1] in x.square:
+                        x.move(move[2:])
+                        return
+    #Be2d3
+    elif length == 5:
+        if move == 'O-O-O':
+            if whites_turn:
+                wking.move(move)
+                return
+            else:
+                bking.move(move)    
+                return
+        else:
+            pt = pis[move[0]]
+            for x in selfpieces:
+                if type(x) is pt and move[3:] in x.moves and move[1:3] == x.square:
+                    x.move(move[3:])
+                    return
+    elif length == 6:
+        if '=' in move:
+            for x in selfpieces:
+                if type(x) is pawn and x.square[0] == move[0] and move[1:] in x.moves:
+                    x.move(move[1:], definitepromote=True)
+                    return
+        else:
+            pt = pis[move[0]]
+            for x in selfpieces:
+                if type(x) is pt and move[3:] in x.moves and move[1:3] == x.square:
+                    x.move(move[3:])
+                    return
+    
+    
+    raise ValueError(move + " is an invalid/illegal move")                  
+
 # Main game loop
 def main():
     global wpieces, bpieces, pieces, bking, wking, wkrook, wqrook, bkrook, bqrook
@@ -1193,8 +1257,7 @@ def main():
     bpieces = [x for x in pieces if x.isBlack]
 
     def redraw():
-        global clicked_on_piece, whites_turn, whitewantsdraw, blackwantsdraw
-        nonlocal draw
+        global whitewantsdraw, blackwantsdraw
         
         #Board Initialization
         board()
@@ -1211,15 +1274,7 @@ def main():
 
         drawblack.color = (125, 125, 125)
         drawwhite.color = (125, 125, 125)
-        checkforchecks()
-        draw = checkdraw()
-        if draw[0]:
-            menu('DRAW BY ' + draw[1].upper())
-        if whites_turn:
-            setlegalmoves('white')
-        else:
-            setlegalmoves('black')
-        
+
             
         wtimelabel = main_font.render(tomins(round(wtime)), 1, (255, 255, 255))
         btimelabel = main_font.render(tomins(round(btime)), 1, (255, 255, 255))
@@ -1246,39 +1301,24 @@ def main():
         resignwhite.draw()
         drawblack.draw()
         drawwhite.draw()
- 
-        #Event Checking
-        pos = pygame.mouse.get_pos()
-        for event in pygame.event.get():
-                if event.type==pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    for x in pieces:
-                        if x.click(pos):
-                            if whites_turn != x.isBlack:
-                                clicked_on_piece = x
-                    if clicked_on_piece != None:
-                        checkmove(clicked_on_piece, pos)
-                    if resignblack.click(pos):
-                        if resignblack.text == "Resign":
-                            menu('White wins by resignation')
-                        else:
-                            menu('Game Aborted')
-                    if resignwhite.click(pos):
-                        if resignwhite.text == "Resign":
-                            menu('Black wins by resignation')
-                        else:
-                            menu('Game Aborted')  
-                    if drawwhite.click(pos):
-                        whitewantsdraw = True
-                    if drawblack.click(pos):
-                        blackwantsdraw = True
+        pygame.display.update()
 
+    if pl_color == 1: flip(False)
+    else: flip(True)
 
     while run:
         clock.tick(60)
+
+        wpieces = [x for x in pieces if not x.isBlack]
+        bpieces = [x for x in pieces if x.isBlack]
         
+        redraw()
+
+
+        if whites_turn == pl_color:
+             notationtomove(input('Move: '))
+             continue
+
         if whites_turn:
             wtime -= 1/76
             if wtime <= 0:
@@ -1297,12 +1337,46 @@ def main():
                     draw = (True, "")
                     menu('IN. MATERIAL VS TIMEOUT')
 
-        redraw()
-        wpieces = [x for x in pieces if not x.isBlack]
-        bpieces = [x for x in pieces if x.isBlack]
+        if type(square_occupied('a8', returnpiece=True)) is queen:
+            checkforchecks()
+        else:
+            checkforchecks()
+        draw = checkdraw()
+        if draw[0]:
+            menu('DRAW BY ' + draw[1].upper())
+        if whites_turn:
+            setlegalmoves('white')
+        else:
+            setlegalmoves('black')
             
-        pygame.display.update()
-
+        #Event Checking
+        pos = pygame.mouse.get_pos()
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for x in pieces:
+                    if x.click(pos):
+                        if whites_turn != x.isBlack:
+                            clicked_on_piece = x
+                if clicked_on_piece != None:
+                    checkmove(clicked_on_piece, pos)
+                if resignblack.click(pos):
+                    if resignblack.text == "Resign":
+                        menu('White wins by resignation')
+                    else:
+                        menu('Game Aborted')
+                if resignwhite.click(pos):
+                    if resignwhite.text == "Resign":
+                        menu('Black wins by resignation')
+                    else:
+                        menu('Game Aborted')  
+                if drawwhite.click(pos):
+                    whitewantsdraw = True
+                if drawblack.click(pos):
+                    blackwantsdraw = True
+        
 #Menu screen
 def menu(res, start=False, loggedin = False):
     global run, file
@@ -1374,7 +1448,7 @@ def menu(res, start=False, loggedin = False):
                     if export.click(pygame.mouse.get_pos()):
                         path = os.path.join('C:\\Users\\darsh\\Downloads', 'game.pgn')
                         with open(path, 'w')as f:
-                            f.writelines([f'[Won By "{getword(res, -1).capitalize()}"]\n', '[White ""]\n', '[Black ""]\n', f'[Result "{result}"]\n'])
+                            f.writelines([f'[Won By "{getword(res, -1).capitalize() if "INSUFFICIENT" not in res else "INSUFFICIENT MATERIAL"}"]\n', '[White ""]\n', '[Black ""]\n', f'[Result "{result}"]\n'])
                             for x in file:
                                 f.write(x + ' ')
                             f.write('\n' + result)
@@ -1461,4 +1535,9 @@ def login(createmenu = False):
                 if back.click(pygame.mouse.get_pos()):
                     menu("", True)
 
-menu("", True)
+try:
+    menu("", True)
+except Exception as e:
+    log = open('log.txt', 'w')
+    log.write(str(e))
+    log.close()
