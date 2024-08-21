@@ -1,5 +1,4 @@
-import pygame, sys
-sys.dont_write_bytecode = True
+import pygame, mysql.connector
 
 class InputBox:
     
@@ -16,9 +15,6 @@ class InputBox:
         if passw:
             self.visible = False
         self.w = w
-        
-
-
 
     def handle_event(self, event):
         
@@ -45,12 +41,10 @@ class InputBox:
                         self.txt_surface = self.FONT.render("*" * len(self.text), True, self.color)
                     else:
                         self.txt_surface = self.FONT.render(self.text, True, self.color)
-
     
     def get(self):
         return self.text
-        
-
+    
     def update(self):
         # Resize the box if the text is too long.
         width = max(self.w, self.txt_surface.get_width()+10)
@@ -95,10 +89,8 @@ class Button:
             return True
         else:
             return False
-        
-from os import error
-import mysql.connector
-
+    
+#Database connector
 class MYSQL:
     def __init__(self, path, host, user, password, database):
         self.path = path
