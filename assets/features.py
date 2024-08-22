@@ -1,4 +1,6 @@
-import pygame, mysql.connector
+import pygame
+from datetime import datetime
+
 
 class InputBox:
     
@@ -15,6 +17,9 @@ class InputBox:
         if passw:
             self.visible = False
         self.w = w
+        
+
+
 
     def handle_event(self, event):
         
@@ -41,10 +46,12 @@ class InputBox:
                         self.txt_surface = self.FONT.render("*" * len(self.text), True, self.color)
                     else:
                         self.txt_surface = self.FONT.render(self.text, True, self.color)
+
     
     def get(self):
         return self.text
-    
+        
+
     def update(self):
         # Resize the box if the text is too long.
         width = max(self.w, self.txt_surface.get_width()+10)
@@ -90,96 +97,50 @@ class Button:
         else:
             return False
     
-#Database connector
-class MYSQL:
-    def __init__(self, path, host, user, password, database):
-        self.path = path
-        self.mydb = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database)
-        
-        self.mycursor = self.mydb.cursor(buffered=True)
 
-    def select(self, table, condition, value, condition2='', value2='', operator=''):
-        try:
-            if condition2 == '':
-                command = (f"SELECT * FROM {table} WHERE {condition} = '{value}'")
-                self.mycursor.execute(command)
-                results = self.mycursor.fetchall()
-                return results
-            
-            else:
-                command = (f"SELECT * FROM {table} WHERE {condition} = '{value}' {operator} {condition2} = '{value2}'")
-                self.mycursor.execute(command)
-                results = self.mycursor.fetchall()
-                if results == []:
-                    return ['No results']
-                return results
-            
-        except mysql.connector.errors.Error as e:
-            return "Error", e
-        
-        
-    
-    def selectall(self, table, order=False, orderby='', ordering='DESC'):
-        try:
-            if not order:
-                command = f'SELECT * from {table}'
-                self.mycursor.execute(command)
-                results = self.mycursor.fetchall()
-                return results
-            else:
-                command = f'SELECT * from {table} ORDER BY {orderby} {ordering}'
-                self.mycursor.execute(command)
-                results = self.mycursor.fetchall()
-                return results
-        except mysql.connector.errors.Error as e:
-            return "Error", e
 
-   
-    def selectexists(self, table, condition, value, condition2='', value2='', operator=''):
-        try:
-            if condition2 == '':
-                command = (f"SELECT EXISTS(SELECT * FROM {table} WHERE {condition} = '{value}')")
-                self.mycursor.execute(command)
-                results = self.mycursor.fetchall()
-                return results
-        
-            else:
-            
-                command = (f"SELECT EXISTS(SELECT * FROM {table} WHERE {condition} = '{value}' {operator} {condition2} = '{value}')")
-                self.mycursor.execute(command)
-                results = self.mycursor.fetchall()
-                return results
-        except mysql.connector.errors.Error as e:
-            return "Error", e
-    
-    def insert(self, table, column, values):
-        try:
-            command = f"INSERT into {table}({column[0]},{column[1]}) VALUES ('{values[0]}','{values[1]}')"
-            self.mycursor.execute(command)
-            self.mydb.commit()
+class Timer():
+    """
+    timer.start() - should start the timer
+    timer.pause() - should pause the timer
+    timer.resume() - should resume the timer
+    timer.get() - should return the current time
+    """
 
-                
-        except mysql.connector.errors.Error as e:
-            return str(e)
-        
-    
-    def update(self, table, columns, values):
-        try:
-            command = f"UPDATE {table} SET {columns[0]}='{values[0]}' WHERE {columns[1]}='{values[1]}'"
-            self.mycursor.execute(command)
-            self.mydb.commit()
-        except mysql.connector.errors.Error as e:
-            print(e)
+    def __init__(self):
+        self.timestarted = None
+        self.timepaused = None
+        self.paused = False
 
-    def runncommand(self, command):
-        try:
-            self.mycursor.execute(command)
-            self.mydb.commit()
-            
-        except mysql.connector.errors.Error as e:
-            print(e)
+    def start(self):
+        """ Starts an internal timer by recording the current time """
+        self.timestarted = datetime.now()
 
+    def pause(self):
+        """ Pauses the timer """
+        if self.timestarted is None:
+            raise ValueError("Timer not started")
+        if self.paused:
+            raise ValueError("Timer is already paused")
+        self.timepaused = datetime.now()
+        self.paused = True
+
+    def resume(self):
+        """ Resumes the timer by adding the pause time to the start time """
+        if self.timestarted is None:
+            raise ValueError("Timer not started")
+        if not self.paused:
+            return
+        pausetime = datetime.now() - self.timepaused
+        self.timestarted = self.timestarted + pausetime
+        self.paused = False
+
+    def get(self):
+        """ Returns a timedelta object showing the amount of time
+            elapsed since the start time, less any pauses """
+        if self.timestarted is None:
+            raise ValueError("Timer not started")
+        if self.paused:
+            return self.timepaused - self.timestarted
+        else:
+            return datetime.now() - self.timestarted

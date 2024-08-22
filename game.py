@@ -32,9 +32,9 @@ class Game:
         if self.whitewantsdraw and self.blackwantsdraw:
             self.setResult('1/2-1/2', 'agreement')
 
-    def abort(self):
+    def abort(self, p):
         self.aborted = True
-        self.setResult('0-0', 'Aborted')
+        self.setResult('0-0', f'Aborted by {"black" if p else "white"}')
 
     def setResult(self, res, by):
         self.result = res
@@ -45,5 +45,3 @@ class Game:
         
     def ended(self) -> bool:
         return self.result != None or self.aborted  
-    
-    
