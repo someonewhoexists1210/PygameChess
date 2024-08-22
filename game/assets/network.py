@@ -2,20 +2,24 @@ import socket
 import pickle
 
 class Network:
-    
-    def __init__(self):
+    def __init__(self, ty='game'):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = self.getIp()
-        self.port = 1000
+        self.server = '127.0.0.1' 
+        self.port = 8080
         self.addr = (self.server, self.port)
-        self.p = self.connect()
+        self.connect()
+        self.client.send(str.encode(ty))
+        if ty == 'db':
+            self.client.recv(2048)
+        else:
+            self.p = self.client.recv(1024).decode()
 
     def getP(self):
         return self.p
-    
+
     def getIp(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8', 80))
+        s.connect(('209.58.169.47', 8080))
         ip = s.getsockname()[0]
         s.close()
         del s
@@ -39,5 +43,13 @@ class Network:
         except:
             return "Error closing connection"
         
+    def db(self, ty, table, cols=(), vals=()):
+        self.client.send(f'{ty}| {table}| {cols}| {vals}'.encode())
+        try:
+            return self.client.recv(4096).decode()
+        finally:
+            self.client.close()
+            print('closed')
+
         
         

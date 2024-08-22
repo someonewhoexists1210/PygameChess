@@ -3,7 +3,6 @@ from datetime import datetime
 
 
 class InputBox:
-    
     def __init__(self, x, y, w, h, passw=False, text=''):
         self.COLOR_INACTIVE = pygame.Color('lightskyblue3')
         self.COLOR_ACTIVE = pygame.Color('dodgerblue2')
@@ -97,8 +96,6 @@ class Button:
         else:
             return False
     
-
-
 class Timer():
     """
     timer.start() - should start the timer

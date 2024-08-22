@@ -1560,7 +1560,6 @@ def login(createmenu = False):
                     if not createmenu:
                         db = Network('db')
                         res = eval(db.db('select', 'users', ('username', 'password'), (user.get(), password.get())))
-                        # res = executer.select('users', 'username', user.get(), 'password',password.get(), 'AND')
                         if res[0] == 'No results':
                             mes.text = "Wrong Username or password"
                             drawmes = True
