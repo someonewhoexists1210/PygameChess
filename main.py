@@ -1,9 +1,7 @@
 import pygame
 import sys, math, os
-from features import Button, InputBox, MYSQL
-from dotenv import load_dotenv
-load_dotenv()
-from network import Network
+from assets.features import Button, InputBox, Timer
+from assets.network import Network
 
 #Pygame Intialization
 pygame.font.init()
@@ -11,6 +9,7 @@ WID,HEI = 700,400
 WIN = pygame.display.set_mode((WID,HEI))
 pygame.display.set_caption('Chess')
 main_font = pygame.font.SysFont("comicsans", 30)
+message_font = pygame.font.Font('assets/PlaypenSans.ttf', 20)
 
 
 resultss = {
@@ -94,17 +93,17 @@ boardpositions = {
 }
 
 # Background
-BG = pygame.image.load('imgs/bg.png')
-#Background for side panel
-BG2 = pygame.image.load('imgs/bg2.png')
+BG = pygame.image.load('assets/imgs/bg.png')
+#Background for side
+BG2 = pygame.image.load('assets/imgs/bg2.png')
 
 IMGS = {
-        'pawn': (pygame.transform.scale(pygame.image.load('imgs/wpawn.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blpawn.png'), (50,50))),
-        'knight': (pygame.transform.scale(pygame.image.load('imgs/wknight.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blknight.png'), (50,50))),
-        'bishop': (pygame.transform.scale(pygame.image.load('imgs/wbishop.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blbishop.png'), (50,50))),
-        'rook': (pygame.transform.scale(pygame.image.load('imgs/wrook.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blrook.png'), (50,50))),
-        'queen': (pygame.transform.scale(pygame.image.load('imgs/wqueen.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blqueen.png'), (50,50))),
-        'king': (pygame.transform.scale(pygame.image.load('imgs/wking.png'), (50,50)), pygame.transform.scale(pygame.image.load('imgs/blking.png'), (50,50))),
+        'pawn': (pygame.transform.scale(pygame.image.load('assets/imgs/wpawn.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blpawn.png'), (50,50))),
+        'knight': (pygame.transform.scale(pygame.image.load('assets/imgs/wknight.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blknight.png'), (50,50))),
+        'bishop': (pygame.transform.scale(pygame.image.load('assets/imgs/wbishop.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blbishop.png'), (50,50))),
+        'rook': (pygame.transform.scale(pygame.image.load('assets/imgs/wrook.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blrook.png'), (50,50))),
+        'queen': (pygame.transform.scale(pygame.image.load('assets/imgs/wqueen.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blqueen.png'), (50,50))),
+        'king': (pygame.transform.scale(pygame.image.load('assets/imgs/wking.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blking.png'), (50,50))),
     }
 
 #Current pieces on board
@@ -116,6 +115,8 @@ wking = None
 
 #Misc Variables
 abcs = '123abcdefghij'
+nm = "Anonymous"
+rating = 1200
 clicked_on_piece = None
 pawnpushed = 0
 piece_taken = 0
@@ -123,11 +124,7 @@ whites_turn = True
 movesdone = 0
 positions = []
 file = []
-DB_PATH = os.getenv('DB_PATH')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_NAME = os.getenv('DB_NAME')
-executer = MYSQL(os.path.abspath(DB_PATH), 'localhost', DB_USER, DB_PASSWORD, DB_NAME)
+loggedin = False
 
 #Useful lambdas
 right = lambda x: abcs[abcs.index(x[0]) + 1] + x[1]
@@ -154,25 +151,11 @@ def board():
                         pygame.draw.rect(WIN, (255,255,255), (n*50,i*50,50,50))
 
 #Flips board
-def flip(whitedown):
+def flip(whitedown = False):
     if whitedown:
         for x in boardpositions:
-            if x[0] == 'a':
-                boardpositions[x] = (0, boardpositions[x][1])
-            elif x[0] == 'b':
-                boardpositions[x] = (50, boardpositions[x][1])
-            elif x[0] == 'c':
-                boardpositions[x] = (100, boardpositions[x][1])
-            elif x[0] == 'd':
-                boardpositions[x] = (150, boardpositions[x][1])
-            elif x[0] == 'e':
-                boardpositions[x] = (200, boardpositions[x][1])
-            elif x[0] == 'f':
-                boardpositions[x] = (250, boardpositions[x][1])
-            elif x[0] == 'g':
-                boardpositions[x] = (300, boardpositions[x][1])
-            else:
-                boardpositions[x] = (350, boardpositions[x][1])
+            pos = abcs.index(x[0]) * 50 - 150
+            boardpositions[x] = (pos, boardpositions[x][1])
             
             if x[1] == '8':
                 boardpositions[x] = (boardpositions[x][0], 0)
@@ -209,22 +192,9 @@ def flip(whitedown):
             else:
                 boardpositions[x] = (350, boardpositions[x][1])
             
-            if x[1] == '1':
-                boardpositions[x] = (boardpositions[x][0], 0)
-            elif x[1] == '2':
-                boardpositions[x] = (boardpositions[x][0], 50)
-            elif x[1] == '3':
-                boardpositions[x] = (boardpositions[x][0], 100)
-            elif x[1] == '4':
-                boardpositions[x] = (boardpositions[x][0], 150)
-            elif x[1] == '5':
-                boardpositions[x] = (boardpositions[x][0], 200)
-            elif x[1] == '6':
-                boardpositions[x] = (boardpositions[x][0], 250)
-            elif x[1] == '7':
-                boardpositions[x] = (boardpositions[x][0], 300)
-            else:
-                boardpositions[x] = (boardpositions[x][0], 350)
+            posn = int(x[1]) * 50 - 50
+            boardpositions[x] = (boardpositions[x][0], posn)
+
 
 #Check if square clicked
 def sqclick(sq, pos):
@@ -505,6 +475,26 @@ class pawn(piece):
     def __init__(self, square, isBlack):
         super().__init__(square, isBlack, 1)
         
+    def enpassant(self):
+        mvs = set()
+        if self.isBlack:
+            if type(last_move[0]) is pawn and last_move[1][1] == '4' and last_move[2][1] == '2':
+                if self.square[1] == '4':
+                    if last_move[1][0] == abcs[abcs.index(self.square[0]) + 1]:
+                        mvs.add('x' + abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) - 1))
+                        
+                    elif last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
+                        mvs.add('x' + abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) - 1))
+        else:
+            if type(last_move[0]) is pawn and last_move[1][1] == '5' and last_move[2][1] == '7':
+                if self.square[1] == '5':
+                    if last_move[1][0] == abcs[abcs.index(self.square[0]) + 1]:
+                        mvs.add('x' + abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) + 1))
+                    elif last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
+                        mvs.add('x' + abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) + 1))    
+
+        return mvs
+    
     #Checks where it can moves
     def check_moves(self): 
         mvs = set([])
@@ -532,21 +522,7 @@ class pawn(piece):
                 mvs.add(l)
        
         if last_move != None:
-            if self.isBlack:
-                if type(last_move[0]) is pawn and last_move[1][1] == '4' and last_move[2][1] == '2':
-                    if self.square[1] == '4':
-                        if last_move[1][0] == abcs[abcs.index(self.square[0]) + 1]:
-                            mvs.add('x' + abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) - 1))
-                            
-                        elif last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
-                            mvs.add('x' + abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) - 1))
-            else:
-                if type(last_move[0]) is pawn and last_move[1][1] == '5' and last_move[2][1] == '7':
-                    if self.square[1] == '5':
-                        if last_move[1][0] == abcs[abcs.index(self.square[0]) + 1]:
-                            mvs.add('x' + abcs[abcs.index(self.square[0]) + 1] + str(int(self.square[1]) + 1))
-                        elif last_move[1][0] == abcs[abcs.index(self.square[0]) - 1]:
-                            mvs.add('x' + abcs[abcs.index(self.square[0]) - 1] + str(int(self.square[1]) + 1))
+            mvs |= self.enpassant()
         
         tor = [[], []]
         for m in mvs:
@@ -791,13 +767,6 @@ def is_sufficient(color = None):
         if len(pss[color]) == 2:
             return False
 
-#Gets current position
-def get_position():
-    temp = []
-    for p in pieces:
-        temp.append((p.square, p))
-    return temp
-
 #Checks for a draw
 def checkdraw():
     if len(pieces) <= 4:
@@ -805,19 +774,20 @@ def checkdraw():
 
         for p in pieces:
             if type(p) is queen or type(p) is rook or type(p) is pawn:
-                if pawnpushed >= 50 and piece_taken >= 50: return True, '50 move rule'    
-                elif positions.count(get_position()) >= 3: return True, 'Repetition'
+                if min(pawnpushed, piece_taken) >= 50: return True, '50 move rule'    
+                elif positions.count(fen()) >= 3: return True, 'Repetition'
                 else: return False, 'Not a draw' 
                     
         else:
             if len(wpieces) <= 2 and len(bpieces) <= 2: return True, 'Insufficient Material'            
-            elif positions.count(get_position()) >= 3: return True, 'Repetition'
+            elif positions.count(fen()) >= 3: return True, 'Repetition'
             else: return False, 'Not a draw'
 
             
     else:
-        if pawnpushed >= 50 and piece_taken >= 50: return True, '50 Move Rule'
-        elif positions.count(get_position()) >= 3: return True, 'Repetition'
+        if min(pawnpushed, piece_taken) >= 50: return True, '50 Move Rule'
+        elif positions.count(fen()) >= 3: 
+            return True, 'Repetition'
         else: return False, 'Not a draw'
       
 #Checks if in check
@@ -864,16 +834,8 @@ def setlegalmoves(sidechecked):
                 takenp = square_occupied(c[1:3], returnpiece=True)
                 if takenp == None and type(x) is pawn:
                     takenp = square_occupied(c[1] + str(int(c[2]) + 1), returnpiece=True) if x.isBlack else square_occupied(c[1] + str(int(c[2]) - 1), returnpiece=True)
-                try:
-                    pieces.remove(takenp)
-                    checkingsidepieces.remove(takenp)
-
-                except Exception as e:
-                    print(file)
-                    print(x)
-                    print(checkedsidepieces)
-                    print(e)
-
+                pieces.remove(takenp)
+                checkingsidepieces.remove(takenp)
                 x.square = c[1:3]
 
             else: x.square = c
@@ -908,13 +870,19 @@ def setlegalmoves(sidechecked):
 # Called after every move
 def movechange(passtonotation = ''):
     global whites_turn, clicked_on_piece, pawnpushed, movesdone, promoted, movenota
+    if whites_turn:
+        wtimer.pause()
+        btimer.resume()
+    else:
+        btimer.pause()
+        wtimer.resume()
     whites_turn = not whites_turn
     clicked_on_piece = None
     pawnpushed += 0.5
     movesdone += 0.5
     for p in pieces:
         p.check_moves()
-    positions.append(get_position())
+    positions.append(fen())
     movenota = notation(additional = passtonotation)
     promoted = (False, None)
 
@@ -1189,15 +1157,17 @@ def notationtomove(move):
 def main():
     global wpieces, bpieces, pieces, bking, wking, wkrook, wqrook, bkrook, bqrook
     global clicked_on_piece, whites_turn, movesdone, last_move, promoted, game
-    global file, positions, run, pawnpushed, piece_taken, net, pl_color
+    global file, positions, run, pawnpushed, piece_taken, net, pl_color, btimer, wtimer
     run = True
     clock = pygame.time.Clock()
     net = Network()
     pl_color = int(net.getP())
     game = net.send('p-' + nm)
 
-    resign = Button(WIN, 450, 150, "Resign", (0, 0, 0) if pl_color == 1 else (255, 255, 255),(255, 255, 255) if pl_color == 1 else (0, 0, 0), autofit= False, size = (100, 40))
-    drawbut = Button(WIN, 575, 150, "Draw", (125, 125, 125), (255, 255, 255) if pl_color == 0 else (0, 0, 0), autofit= False, size = (100, 40))
+
+    drawmes = message_font.render(f"{'White' if pl_color else 'Black'} wants a draw", 1, (0, 0, 0))
+    resign = Button(WIN, 450, 250, "Resign", (0, 0, 0) if pl_color == 1 else (255, 255, 255),(255, 255, 255) if pl_color == 1 else (0, 0, 0), autofit= False, size = (100, 40))
+    drawbut = Button(WIN, 575, 250, "Draw", (125, 125, 125), (255, 255, 255) if pl_color == 0 else (0, 0, 0), autofit= False, size = (100, 40))
 
     whites_turn = True
     last_move = None
@@ -1210,11 +1180,14 @@ def main():
     positions = []
     file = []
 
-    print(pl_color)
     flip(not pl_color)
 
+    wstarttime = 300
+    bstarttime = 300
     wtime = 300
     btime = 300
+    wtimer = Timer()
+    btimer = Timer()
 
     wking = king('e1', 0)
     bking = king('e8', 1)
@@ -1268,7 +1241,6 @@ def main():
         p.check_moves()
     wpieces = [x for x in pieces if not x.isBlack]
     bpieces = [x for x in pieces if x.isBlack]
-
     def redraw():
         
         #Board Initialization
@@ -1282,7 +1254,6 @@ def main():
         for piec in pieces:
             piec.draw()
             piec.check_moves()
-            
 
         drawbut.color = (125, 125, 125)
             
@@ -1297,26 +1268,41 @@ def main():
             else:
                 resign.text = 'Resign'
         else:
-            if movesdone == 0:
+            if movesdone <= 0.5:
                 resign.text = 'Abort'
             else:
                 resign.text = 'Resign'   
         
-        if (game.whitewantsdraw and pl_color == 0) or (game.blackwantsdraw and pl_color == 1):
+        if (game.whitewantsdraw and pl_color == 1) or (game.blackwantsdraw and pl_color == 0):
+            WIN.blit(drawmes, (450, 150))
+        elif (game.whitewantsdraw and pl_color == 0) or (game.blackwantsdraw and pl_color == 1):
             drawbut.color = (255, 255, 0)
 
-        resign.draw()
         drawbut.draw()
+        resign.draw()
         pygame.display.update()
     
+    wtimer.start()
+    wtimer.pause()
+    btimer.start()
+    btimer.pause()
     while run:
         clock.tick(60)
         try:
             if not game.ended():
                 game = net.send('get')
-        except EOFError or ConnectionResetError or ConnectionAbortedError:
+                if game.connected() and whites_turn:
+                    wtimer.resume()
+        except EOFError:
             print(net.close())
             menu('Game Disconnected')
+        except ConnectionResetError as e:
+            print(e)
+            menu('Error')
+        except ConnectionAbortedError as e:
+            print(e)
+            menu('Error')
+        
         
         if game.connected() and not game.ended():
             events = pygame.event.get()
@@ -1343,10 +1329,11 @@ def main():
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_h]:
-                fen()
+                print(fen())
+                
 
             if whites_turn:
-                wtime -= 1/76
+                wtime = wstarttime - wtimer.get().seconds
                 if wtime <= 0:
                     if is_sufficient('black'):
                         menu('BLACK WINS ON TIME', send=True)
@@ -1355,7 +1342,7 @@ def main():
                         menu('TIMEOUT VS IN. MATERIAL', send=True)
 
             else:
-                btime -= 1/76
+                btime = bstarttime - btimer.get().seconds
                 if btime <= 0:
                     if is_sufficient('white'):
                         menu('WHITE WINS ON TIME', send=True)
@@ -1403,12 +1390,19 @@ def main():
 
         elif not game.connected():
             mes = Button(WIN, 1, 2, 'Waiting for player', (255, 255, 255), center=True, screensize = (WID, HEI))
+            ex = Button(WIN, WID-30, HEI-30, 'X', (255, 0, 0), textcolor=(255, 255, 255), size =(30, 30), autofit=False)
             mes.draw()
+            ex.draw()
             pygame.display.update()
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if ex.click(pos):
+                        net.close()
+                        return
 
         elif game.ended():
             if game.result == '0-1':
@@ -1425,18 +1419,11 @@ def main():
             menu(color  + game.endby)
 
 #Menu screen
-def menu(res, start=False, loggedin = False, send=False):
+def menu(res, start=False, send=False):
     global run, file, nm, game
     run = False
     res = res.upper()
     result = ""
-    if not start:
-        export = Button(WIN, 1, 2, "Export", (47, 60, 126), (251, 234, 235), autofit=True)
-        export.x, export.y = WID - export.width - 2, HEI - export.height - 2
-    else:
-        board()
-        res = "WELCOME"
-        nm = 'Anonymous'
         
     message = Button(WIN,225, 20, res, fontsize=15)
     new = Button(WIN, 1, 100, "New Game", (249, 97, 103), (255, 255, 255 ))
@@ -1445,6 +1432,8 @@ def menu(res, start=False, loggedin = False, send=False):
         logins = Button(WIN, 1, 200, "Login", (249, 97, 103), (255, 255, 255 ))
         logins.x = 550 - (logins.width/2)
     else:
+        if not start:
+            db = Network('db').db('update', 'users', ('rating', 'username'), (rating + 8, nm))
         label1 = pygame.font.SysFont("calibri", 20).render(nm + f'({rating})', 1, (0, 0, 0))
 
 
@@ -1466,8 +1455,12 @@ def menu(res, start=False, loggedin = False, send=False):
         if send:
             game = net.send(result + ',' + (getword(res, -1).capitalize() if "INSUFFICIENT" not in res else "INSUFFICIENT MATERIAL"))
 
-
-
+    if not start:
+        g = fen()
+        export = Button(WIN, 1, 2, "Export", (47, 60, 126), (251, 234, 235), autofit=True)
+        export.x, export.y = WID - export.width - 2, HEI - export.height - 2
+        net.client.close()
+        
     if res.count('CHECKMATE') == 1:
         if file[-1][-1] != "+":
             file[-1] = file[-1] + "#"
@@ -1482,10 +1475,15 @@ def menu(res, start=False, loggedin = False, send=False):
 
     while True:
         WIN.blit(BG2, (400, 0))
-        if not start: export.draw()
+        if not start: 
+            fentopos(g, True)
+            export.draw()
+        else:
+            board()
         message.draw()
         new.draw()
-        if not loggedin: logins.draw()
+        if not loggedin:
+            logins.draw()
         else: 
             WIN.blit(label1, (420, HEI - 30))
 
@@ -1521,7 +1519,7 @@ def menu(res, start=False, loggedin = False, send=False):
 
 #Login Screen
 def login(createmenu = False):
-    global nm, rating
+    global nm, rating, loggedin
     drawmes = False
     user = InputBox(300, 125, 200, 30)
     password = InputBox(300, 225, 200, 30, True)
@@ -1560,18 +1558,21 @@ def login(createmenu = False):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if submit.click(pygame.mouse.get_pos()):
                     if not createmenu:
-                        res = executer.select('users', 'username', user.get(), 'password',password.get(), 'AND')
+                        db = Network('db')
+                        res = eval(db.db('select', 'users', ('username', 'password'), (user.get(), password.get())))
+                        # res = executer.select('users', 'username', user.get(), 'password',password.get(), 'AND')
                         if res[0] == 'No results':
                             mes.text = "Wrong Username or password"
                             drawmes = True
                         elif type(res) is list:
-                            print(executer.selectall('users'))
                             nm, rating = res[0][0], res[0][2]
-                            menu("", start = True,loggedin=True)
+                            loggedin = True
+                            menu("", start = True)
                     else:
                         if user.get() != '' and password.get() != '':
                             if len(user.get()) <= 8:
-                                res = executer.insert('users', ('username', 'password'), (user.get(), password.get()))
+                                db = Network('db')
+                                res = db.db('insert', 'users', ('username', 'password'), (user.get(), password.get()))
                                 if res != None:
                                     if "Duplicate" in res:
                                         mes.text = "Username already taken"
@@ -1579,7 +1580,8 @@ def login(createmenu = False):
                                 else:
                                     nm = user.get()
                                     rating = 1200
-                                    menu('', start=True, loggedin=True)
+                                    loggedin = True
+                                    menu('', start=True)
 
                             else:
                                 mes.text = "Username must be at max 8 characters"
@@ -1593,7 +1595,8 @@ def login(createmenu = False):
                 if back.click(pygame.mouse.get_pos()):
                     menu("", True)
 
-def fen():
+def fen() -> str:
+    '''Converts current position to fen string'''
     files = 'abcdefgh'
     ranks = '12345678'
     pos = {
@@ -1654,20 +1657,72 @@ def fen():
         dash = False
 
     if dash:
-        res += '-'
+        res += '- '
 
     dash = True
-    if type(last_move[0]) is pawn and (int(last_move[2][1]) - int(last_move[1][1])) % 2 == 0:
-        res+= ' ' + last_move[2][0] + str(int(last_move[2][1]) - 1)
-        dash = False
-    
+    if last_move != None:
+        if last_move[0].isBlack:
+            pawns = list(filter(lambda x: type(x) is pawn, wpieces))
+            s = 1
+        else:
+            pawns = list(filter(lambda x: type(x) is pawn, wpieces))
+            s = -1
+
+        for p in pawns:
+            if p.enpassant() != set():
+                res+= ' ' + last_move[2][0] + str(int(last_move[1][1]) + s)
+                dash = False
+                break
+        
     if dash:
         res += '-'
+    
+    res += f' {int(min(pawnpushed*2, piece_taken*2))} '
+    res += str(int(movesdone))
 
-    print(res)
+    return res
 
 
+
+def fentopos(num, flipboard=False):
+    global pieces, whites_turn
+    pieces = []
+    files = 'abcdefgh1'
+    file = 'a'
+    rank = 8
+
+    num = str(num).split(' ')[0]
+
+    for x in num:
+        if x == '/':
+            rank -= 1
+            file = 'a'
+            continue
+        try:
+            c = int(x)
+        except:
+            c = 0
+            if str(x).lower() == 'p':
+                pieces.append(pawn(file + str(rank), int(not x.isupper())))
+            elif str(x).lower() == 'n':
+                pieces.append(knight(file + str(rank), int(not x.isupper())))
+            elif str(x).lower() == 'b':
+                pieces.append(bishop(file + str(rank), int(not x.isupper())))
+            elif str(x).lower() == 'r':
+                pieces.append(rook(file + str(rank), int(not x.isupper())))
+            elif str(x).lower() == 'q':
+                pieces.append(queen(file + str(rank), int(not x.isupper())))
+            elif str(x).lower() == 'k':
+                pieces.append(king(file + str(rank), int(not x.isupper())))
+                
+        file = files[files.index(file) + (c if c else 1)]
+    
+    if flipboard:flip()
+    board()
+    for x in pieces:
+        x.draw()
 
 
 if __name__ == '__main__':
-    menu("", True)
+    fentopos('r7/ppp1k3/2n5/3q4/3P4/2Q2N1P/PPP2PP1/R4K1R w - - 0 21')
+    menu("WELCOME", True)
