@@ -1,17 +1,9 @@
-import socket
 from _thread import *
-import pickle
+import pickle, os, socket
+from mys import MYSQL
 from game import Game
 
-
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-ip = s.getsockname()[0]
-s.close()
-del s
-
-
-server = ip
+server = '192.168.1.9'
 port = 1000
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -24,6 +16,8 @@ except socket.error as e:
 s.listen(2)
 print("Waiting for a connection, Server Started")
 
+print(s.getsockname())
+
 connected = set()
 games = {}
 idCount = 0
@@ -32,7 +26,6 @@ idCount = 0
 def threaded_client(conn, p, gameId, addr):
     global idCount
     conn.send(str.encode(str(p)))
-    ended = False
 
     while True:
         try:
@@ -66,9 +59,9 @@ def threaded_client(conn, p, gameId, addr):
                         conn.sendall(pickle.dumps(game))
 
                     elif data == 'abort':
-                        game.abort()
-                        conn.sendall(pickle.dumps(game))
-
+                        game.abort(p)
+                        conn.sendall(pickle.dumps(game))         
+   
                     else:
                         data = data.split(',')
                         game.play(data[0], data[1])
@@ -79,7 +72,7 @@ def threaded_client(conn, p, gameId, addr):
         except Exception as e:
             print(e)
             break
-    if not ended:
+    if not game.ended():
         print("Lost connection to " + str(addr))
         try:
             del games[gameId]
@@ -88,24 +81,63 @@ def threaded_client(conn, p, gameId, addr):
             pass
     else:
         print(f'Game {gameId} ended ({str(game.endby).capitalize()}) ({game.result})')
+    
     idCount -= 1
     conn.close()
 
 
-
 while True:
     conn, addr = s.accept()
-    print("Connected to:", addr)
-
     idCount += 1
-    p = 0
-    gameId = (idCount - 1)//2
-    if idCount % 2 == 1:
-        games[gameId] = Game(gameId)
-        print("Creating a new game...")
+    conn.send('Connected'.encode())
+    ty = conn.recv(2048).decode()
+    print("Connected to:", addr, f'({ty})')
+    if ty == 'db':
+        conn.send(str.encode(' '))
+        db = MYSQL(os.path.abspath('C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin'), 'localhost', 'root', 'Darsh1210', 'chess')
+        while True:
+            try:
+                data = conn.recv(4096).decode()
+
+                data = list(map(str, data.split('| ')))
+                ind=0
+                for _ in data:
+                    if '(' in _:
+                        data[ind] = eval(_)
+                    ind += 1
+                '''
+                Data = [Type, Table, Conditions, Values]
+                '''
+
+                if data[0] == 'select':
+                    if len(data[2]) == 1:
+                        res = db.select(data[1], data[2][0], data[3][0])
+                    else:
+                        res = db.select(data[1], data[2][0], data[3][0], data[2][1], data[3][1], 'AND')
+                
+                elif data[0] == 'insert':
+                    res = db.insert(data[1], data[2], data[3])
+                elif data[0] == 'update':
+                    res = db.update(data[1], data[2], data[3])
+                else:
+                    conn.send('Incorrect data'.encode())
+                    break
+
+                conn.send(str(res).encode())
+                break
+
+            except:
+                break
+        idCount -= 1
+        conn.close()
     else:
-        games[gameId].ready = True
-        p = 1
+        p = 0
+        gameId = (idCount - 1)//2
+        if idCount % 2 == 1:
+            games[gameId] = Game(gameId)
+            print("Creating a new game...")
+        else:
+            games[gameId].ready = True
+            p = 1
 
-
-    start_new_thread(threaded_client, (conn, p, gameId, addr))
+        start_new_thread(threaded_client, (conn, p, gameId, addr))

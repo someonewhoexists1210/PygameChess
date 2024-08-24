@@ -1572,7 +1572,7 @@ def login(createmenu = False):
                             if len(user.get()) <= 8:
                                 db = Network('db')
                                 res = db.db('insert', 'users', ('username', 'password'), (user.get(), password.get()))
-                                if res != None:
+                                if res != 'None':
                                     if "Duplicate" in res:
                                         mes.text = "Username already taken"
                                         drawmes = True
