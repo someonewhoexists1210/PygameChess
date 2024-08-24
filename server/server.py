@@ -1,10 +1,10 @@
 from _thread import *
 import pickle, os, socket
-from mys import MYSQL
+from mys import PostgreSQL
 from game import Game
 
-server = '192.168.1.9'
-port = 1000
+server = ''
+port = 12145
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -94,7 +94,7 @@ while True:
     print("Connected to:", addr, f'({ty})')
     if ty == 'db':
         conn.send(str.encode(' '))
-        db = MYSQL(os.path.abspath('C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin'), 'localhost', 'root', 'Darsh1210', 'chess')
+        db = PostgreSQL('someonewhoexists_pygamechess')
         while True:
             try:
                 data = conn.recv(4096).decode()
