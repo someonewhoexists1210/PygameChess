@@ -1,3 +1,4 @@
+from datetime import datetime
 import pygame
 import sys, math, os
 from assets.features import Button, InputBox, Timer
@@ -10,6 +11,7 @@ WIN = pygame.display.set_mode((WID,HEI))
 pygame.display.set_caption('Chess')
 main_font = pygame.font.SysFont("comicsans", 30)
 message_font = pygame.font.Font('assets/PlaypenSans.ttf', 20)
+games_folder = os.path.join(os.path.dirname(__file__), 'games')
 
 
 resultss = {
@@ -1495,7 +1497,7 @@ def menu(res, start=False, send=False):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if not start:
                     if export.click(pygame.mouse.get_pos()):
-                        path = os.path.join('C:\\Users\\darsh\\Downloads', 'game.pgn')
+                        path = os.path.join(games_folder, f'game{datetime.today()}.pgn')
 
                         tags = [f'[Won By "{getword(res, -1).capitalize() if "INSUFFICIENT" not in res else "INSUFFICIENT MATERIAL"}"]\n',
                                 f'[White {game.players[0]}]\n', 
@@ -1507,6 +1509,7 @@ def menu(res, start=False, send=False):
                             for x in file:
                                 f.write(x + ' ')
                             f.write('\n' + result)
+                            print('Exported to ' + path)
 
                 if new.click(pygame.mouse.get_pos()):
                     main()
