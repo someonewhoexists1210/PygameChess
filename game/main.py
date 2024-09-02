@@ -11,7 +11,7 @@ WIN = pygame.display.set_mode((WID,HEI))
 pygame.display.set_caption('Chess')
 main_font = pygame.font.SysFont("comicsans", 30)
 message_font = pygame.font.Font('assets/PlaypenSans.ttf', 20)
-games_folder = os.path.join(os.path.dirname(__file__), 'games')
+games_folder = os.path.join(os.path.expanduser("~"), "Downloads")
 
 
 resultss = {
