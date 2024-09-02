@@ -26,8 +26,6 @@ To run the game, follow these steps:
 
 Contributions to this project are welcome. If you find any bugs or have suggestions for improvements, please open an issue or submit a pull request.
 
-## Screenshots
-![Pygame Chess](image.png)
-
 ## Contact
+
 You can email me at [darshdiv20@gmail.com](mailto:darshdiv20@gmail.com).
