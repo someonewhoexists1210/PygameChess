@@ -14,6 +14,9 @@ To run the game, follow these steps:
 2. Run `main.exe`. Don't worry if there are some warnings I promise you I'm not a hacker 😉
 3. Enjoy!
 
+## Screenshot
+![alt text](image.png)
+
 ## How to Play
 
 1. Use the mouse to select and move the chess pieces on the board.

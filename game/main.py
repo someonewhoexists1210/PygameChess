@@ -4,13 +4,22 @@ import sys, math, os
 from assets.features import Button, InputBox, Timer
 from assets.network import Network
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS + "/assets"
+    except Exception:
+        base_path = "game/assets"
+
+    return os.path.join(base_path, relative_path)
+
+
 #Pygame Intialization
 pygame.font.init()
 WID,HEI = 700,400
 WIN = pygame.display.set_mode((WID,HEI))
 pygame.display.set_caption('Chess')
 main_font = pygame.font.SysFont("comicsans", 30)
-message_font = pygame.font.Font('assets/PlaypenSans.ttf', 20)
+message_font = pygame.font.Font(resource_path('PlaypenSans.ttf'), 20)
 games_folder = os.path.join(os.path.expanduser("~"), "Downloads")
 
 
@@ -94,18 +103,19 @@ boardpositions = {
 'h8': (350,0)
 }
 
+
 # Background
-BG = pygame.image.load('assets/imgs/bg.png')
+BG = pygame.image.load(resource_path('imgs/bg.png'))
 #Background for side
-BG2 = pygame.image.load('assets/imgs/bg2.png')
+BG2 = pygame.image.load(resource_path('imgs/bg2.png'))
 
 IMGS = {
-        'pawn': (pygame.transform.scale(pygame.image.load('assets/imgs/wpawn.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blpawn.png'), (50,50))),
-        'knight': (pygame.transform.scale(pygame.image.load('assets/imgs/wknight.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blknight.png'), (50,50))),
-        'bishop': (pygame.transform.scale(pygame.image.load('assets/imgs/wbishop.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blbishop.png'), (50,50))),
-        'rook': (pygame.transform.scale(pygame.image.load('assets/imgs/wrook.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blrook.png'), (50,50))),
-        'queen': (pygame.transform.scale(pygame.image.load('assets/imgs/wqueen.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blqueen.png'), (50,50))),
-        'king': (pygame.transform.scale(pygame.image.load('assets/imgs/wking.png'), (50,50)), pygame.transform.scale(pygame.image.load('assets/imgs/blking.png'), (50,50))),
+        'pawn': (pygame.transform.scale(pygame.image.load(resource_path('imgs/wpawn.png')), (50,50)), pygame.transform.scale(pygame.image.load(resource_path('imgs/blpawn.png')), (50,50))),
+        'knight': (pygame.transform.scale(pygame.image.load(resource_path('imgs/wknight.png')), (50,50)), pygame.transform.scale(pygame.image.load(resource_path('imgs/blknight.png')), (50,50))),
+        'bishop': (pygame.transform.scale(pygame.image.load(resource_path('imgs/wbishop.png')), (50,50)), pygame.transform.scale(pygame.image.load(resource_path('imgs/blbishop.png')), (50,50))),
+        'rook': (pygame.transform.scale(pygame.image.load(resource_path('imgs/wrook.png')), (50,50)), pygame.transform.scale(pygame.image.load(resource_path('imgs/blrook.png')), (50,50))),
+        'queen': (pygame.transform.scale(pygame.image.load(resource_path('imgs/wqueen.png')), (50,50)), pygame.transform.scale(pygame.image.load(resource_path('imgs/blqueen.png')), (50,50))),
+        'king': (pygame.transform.scale(pygame.image.load(resource_path('imgs/wking.png')), (50,50)), pygame.transform.scale(pygame.image.load(resource_path('imgs/blking.png')), (50,50))),
     }
 
 #Current pieces on board
