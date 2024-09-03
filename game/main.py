@@ -1507,7 +1507,7 @@ def menu(res, start=False, send=False):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if not start:
                     if export.click(pygame.mouse.get_pos()):
-                        path = os.path.join(games_folder, f'game{datetime.today()}.pgn')
+                        path = os.path.join(games_folder, f'game{datetime.today().strftime("%Y-%m-%d_%H-%M-%S")}.pgn')
 
                         tags = [f'[Won By "{getword(res, -1).capitalize() if "INSUFFICIENT" not in res else "INSUFFICIENT MATERIAL"}"]\n',
                                 f'[White {game.players[0]}]\n', 
